@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ModeToggle } from "@/components/ModeToggle";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -25,11 +27,19 @@ interface IRootLayoutProps {
 
 export default function RootLayout({ children }: Readonly<IRootLayoutProps>) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ModeToggle />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
