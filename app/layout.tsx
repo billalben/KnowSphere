@@ -19,11 +19,11 @@ export const metadata: Metadata = {
   description: "A modern learning management system built",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
+interface IRootLayoutProps {
   children: React.ReactNode;
-}>) {
+}
+
+export default function RootLayout({ children }: Readonly<IRootLayoutProps>) {
   return (
     <html lang="en" className={inter.variable}>
       <body
