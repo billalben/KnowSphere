@@ -42,11 +42,6 @@ export const HeroHeader = () => {
     });
   };
 
-  if (error) {
-    toast.error("Error fetching session data");
-    return <div>Error: {error.message}</div>;
-  }
-
   return (
     <header>
       <nav
@@ -106,7 +101,7 @@ export const HeroHeader = () => {
               </div>
 
               <div className="flex items-center w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
-                {isPending ? null : session ? (
+                {isPending ? null : session && !error ? (
                   <UserDropDown
                     name={session.user?.name}
                     email={session.user?.email}
