@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
+import { RichTextEditor } from "@/components/rich-text-editor/Editor";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,7 +20,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { InputGroup, InputGroupTextarea } from "@/components/ui/input-group";
 import {
   Select,
   SelectContent,
@@ -108,7 +108,11 @@ export function CreateCourseForm() {
                 const handleGenerateSlug = () => {
                   const title = form.getValues("title");
                   if (title) {
-                    form.setValue("slug", slugify(title, { lower: true, strict: true }), { shouldValidate: true });
+                    form.setValue(
+                      "slug",
+                      slugify(title, { lower: true, strict: true }),
+                      { shouldValidate: true },
+                    );
                   }
                 };
 
@@ -126,7 +130,6 @@ export function CreateCourseForm() {
                       <Button
                         type="button"
                         variant="outline"
-                        size="sm"
                         onClick={handleGenerateSlug}
                       >
                         Generate Slug
@@ -179,16 +182,7 @@ export function CreateCourseForm() {
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="description">Description</FieldLabel>
-                  <InputGroup>
-                    <InputGroupTextarea
-                      {...field}
-                      id="description"
-                      placeholder="Detailed description of the course..."
-                      rows={6}
-                      className="min-h-24 resize-none"
-                      aria-invalid={fieldState.invalid}
-                    />
-                  </InputGroup>
+                  <RichTextEditor field={field} />
                   <FieldDescription>
                     Detailed description of what students will learn (max 500
                     characters)
