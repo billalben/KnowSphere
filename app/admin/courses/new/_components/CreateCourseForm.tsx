@@ -33,6 +33,7 @@ import {
   ECourseLevel,
   ECourseStatus,
 } from "@/lib/zodSchemas";
+import slugify from "slugify";
 import { toast } from "sonner";
 import { formatSlug } from "@/lib/formatSlug";
 
@@ -104,15 +105,33 @@ export function CreateCourseForm() {
                   ? formatSlug(field.value)
                   : "";
 
+                const handleGenerateSlug = () => {
+                  const title = form.getValues("title");
+                  if (title) {
+                    form.setValue("slug", slugify(title, { lower: true, strict: true }), { shouldValidate: true });
+                  }
+                };
+
                 return (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="slug">Slug</FieldLabel>
-                    <Input
-                      {...field}
-                      id="slug"
-                      placeholder="course-slug"
-                      aria-invalid={fieldState.invalid}
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        {...field}
+                        id="slug"
+                        placeholder="course-slug"
+                        aria-invalid={fieldState.invalid}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleGenerateSlug}
+                      >
+                        Generate Slug
+                      </Button>
+                    </div>
                     <FieldDescription>
                       {/* URL-friendly version of the course title */}
                       {transformedSlug && transformedSlug !== field.value && (
