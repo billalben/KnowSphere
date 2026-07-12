@@ -8,8 +8,8 @@ import { useState } from "react";
 import Image from "next/image";
 import { ModeToggle } from "@/components/ModeToggle";
 import { authClient } from "@/lib/auth-client";
-import { toast } from "sonner";
 import { UserDropDown } from "./UserDropDown";
+import { useSignOut } from "@/hooks/use-signout";
 
 const menuItems = [
   { name: "Home", href: "/" },
@@ -25,22 +25,9 @@ export const HeroHeader = () => {
     data: session,
     isPending, //loading state
     error, //error object
-    refetch, //refetch the session
   } = authClient.useSession();
 
-  const logout = async () => {
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          toast.success("Successfully logged out!");
-          refetch();
-        },
-        onError: () => {
-          toast.error("Error logging out. Please try again.");
-        },
-      },
-    });
-  };
+  const { handleSignout } = useSignOut();
 
   return (
     <header>
@@ -106,7 +93,7 @@ export const HeroHeader = () => {
                     name={session.user?.name}
                     email={session.user?.email}
                     imageUrl={session.user?.image}
-                    onLogout={logout}
+                    onLogout={handleSignout}
                   />
                 ) : (
                   <>
