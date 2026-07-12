@@ -24,6 +24,8 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
+  courses       Course[]
+
   @@unique([email])
   @@map("user")
 }
@@ -74,4 +76,39 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Course {
+  id          String    @id
+
+  title       String
+  description String?
+  smallDesc  String
+
+  fileKey    String
+  price      Float
+  duration   Int       // duration in minutes
+  level      CourseLevel @default(BEGINNER)
+
+  slug     String   @unique
+  status   CourseStatus @default(DRAFT)
+  category String?  @unique
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade) // if the user is deleted, their courses are deleted too
+  userId String
 }
