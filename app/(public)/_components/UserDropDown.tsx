@@ -60,15 +60,7 @@ export function UserDropDown({
 
           <DropdownMenuItem
             render={
-              <Link href="/profile" className="flex items-center gap-2">
-                <UserIcon size={16} />
-                Profile
-              </Link>
-            }
-          />
-          <DropdownMenuItem
-            render={
-              <Link href="/dashboard" className="flex items-center gap-2">
+              <Link href="/admin" className="flex items-center gap-2">
                 <LayoutDashboardIcon size={16} />
                 Dashboard
               </Link>
@@ -76,7 +68,7 @@ export function UserDropDown({
           />
           <DropdownMenuItem
             render={
-              <Link href="/courses" className="flex items-center gap-2">
+              <Link href="/admin/courses" className="flex items-center gap-2">
                 <LandPlotIcon size={16} />
                 Courses
               </Link>

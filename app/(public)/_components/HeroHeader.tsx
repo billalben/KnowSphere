@@ -13,8 +13,8 @@ import { useSignOut } from "@/hooks/use-signout";
 
 const menuItems = [
   { name: "Home", href: "/" },
-  { name: "Courses", href: "/courses" },
-  { name: "Dashboard", href: "/dashboard" },
+  { name: "Courses", href: "/admin/courses" },
+  { name: "Dashboard", href: "/admin" },
   { name: "Contact", href: "/contact" },
 ];
 
