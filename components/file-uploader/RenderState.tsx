@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
-import { CloudUploadIcon, ImageIcon } from "lucide-react";
+import { CloudUploadIcon, ImageIcon, Loader2Icon, TrashIcon } from "lucide-react";
 import { Button } from "../ui/button";
+import Image from "next/image";
 
 export function RenderEmptyState({ isDragActive }: { isDragActive: boolean }) {
   return (
@@ -41,6 +42,30 @@ export function RenderErrorState() {
       <p className="text-xs text-muted-foreground mt-1">Something went wrong</p>
       <p className="text-xl text-muted-foreground mt-1">
         Click or drag file to retry
+      </p>
+    </div>
+  );
+}
+
+export function RenderImageState({ objectUrl }: { objectUrl: string }) {
+  return (
+    <div className="text-center">
+      <Image src={objectUrl} alt="Uploaded Image" className="w-full h-full object-cover mb-4" width={100} height={100} />
+      <Button className="mt-4" type="button" variant="destructive">
+        <TrashIcon className="w-4 h-4" />
+        Delete
+      </Button>
+    </div>
+  );
+}
+
+export function RenderUploadingState({ progress }: { progress: number }) {
+  return (
+    <div className="text-center">
+      <Loader2Icon className="w-4 h-4 animate-spin" />
+      <p className="text-sm text-muted-foreground">Uploading...</p>
+      <p className="text-sm text-muted-foreground">
+        {progress}%
       </p>
     </div>
   );

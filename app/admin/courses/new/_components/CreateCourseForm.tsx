@@ -33,6 +33,7 @@ import {
   ECourseLevel,
   ECourseStatus,
 } from "@/lib/zodSchemas";
+import { Uploader } from "@/components/file-uploader/Uploader";
 import slugify from "slugify";
 import { toast } from "sonner";
 import { formatSlug } from "@/lib/formatSlug";
@@ -194,22 +195,23 @@ export function CreateCourseForm() {
               )}
             />
 
-            {/* File Key */}
+            {/* Thumbnail */}
             <Controller
               name="fileKey"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="fileKey">File Key</FieldLabel>
-                  <Input
-                    {...field}
-                    id="fileKey"
-                    placeholder="course-thumbnail-key"
-                    aria-invalid={fieldState.invalid}
+                  <FieldLabel htmlFor="fileKey">Thumbnail</FieldLabel>
+                  <Uploader
+                    onUploadComplete={(key) => {
+                      field.onChange(key);
+                    }}
                   />
-                  <FieldDescription>
-                    Storage key for course thumbnail/image
-                  </FieldDescription>
+                  {field.value && (
+                    <FieldDescription>
+                      Uploaded key: <strong>{field.value}</strong>
+                    </FieldDescription>
+                  )}
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
                   )}
