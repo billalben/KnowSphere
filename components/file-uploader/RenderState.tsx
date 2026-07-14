@@ -1,5 +1,10 @@
 import { cn } from "@/lib/utils";
-import { CloudUploadIcon, ImageIcon, Loader2Icon, TrashIcon } from "lucide-react";
+import {
+  CloudUploadIcon,
+  ImageIcon,
+  Loader2Icon,
+  TrashIcon,
+} from "lucide-react";
 import { Button } from "../ui/button";
 import Image from "next/image";
 
@@ -47,13 +52,37 @@ export function RenderErrorState() {
   );
 }
 
-export function RenderImageState({ objectUrl }: { objectUrl: string }) {
+export function RenderImageState({
+  objectUrl,
+  isDeleting,
+  handleRemoveFile,
+}: {
+  objectUrl: string;
+  isDeleting: boolean;
+  handleRemoveFile: () => void;
+}) {
   return (
-    <div className="text-center">
-      <Image src={objectUrl} alt="Uploaded Image" className="w-full h-full object-cover mb-4" width={100} height={100} />
-      <Button className="mt-4" type="button" variant="destructive">
-        <TrashIcon className="w-4 h-4" />
-        Delete
+    <div>
+      <Image
+        src={objectUrl}
+        alt="Uploaded Image"
+        className="w-full h-full object-cover mb-4"
+        width={100}
+        height={100}
+      />
+      <Button
+        className="absolute top-2 right-2"
+        type="button"
+        variant="destructive"
+        onClick={handleRemoveFile}
+        disabled={isDeleting}
+        title="Delete"
+      >
+        {isDeleting ? (
+          <Loader2Icon className="size-4 animate-spin" />
+        ) : (
+          <TrashIcon className="size-4" />
+        )}
       </Button>
     </div>
   );
@@ -61,12 +90,10 @@ export function RenderImageState({ objectUrl }: { objectUrl: string }) {
 
 export function RenderUploadingState({ progress }: { progress: number }) {
   return (
-    <div className="text-center">
-      <Loader2Icon className="w-4 h-4 animate-spin" />
+    <div className="flex flex-col items-center gap-2">
+      <Loader2Icon className="size-4 animate-spin" />
       <p className="text-sm text-muted-foreground">Uploading...</p>
-      <p className="text-sm text-muted-foreground">
-        {progress}%
-      </p>
+      <p className="text-sm text-muted-foreground">{progress}%</p>
     </div>
   );
 }
