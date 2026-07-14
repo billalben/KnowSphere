@@ -35,10 +35,16 @@ import {
 } from "@/lib/zodSchemas";
 import { Uploader } from "@/components/file-uploader/Uploader";
 import slugify from "slugify";
-import { toast } from "sonner";
 import { formatSlug } from "@/lib/formatSlug";
+import { useTransition } from "react";
+import { tryCatch } from "@/hooks/try-catch";
+import { createCourse } from "../actions";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export function CreateCourseForm() {
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
   const form = useForm({
     resolver: zodResolver(courseSchema),
     defaultValues: {
@@ -56,9 +62,23 @@ export function CreateCourseForm() {
   });
 
   const onSubmit = (data: CourseSchemaType) => {
-    console.log("Form Data: ", data);
-    toast.success("Course created successfully!", {
-      description: "Your course has been created.",
+    startTransition(async () => {
+      const { data: result, error } = await tryCatch(createCourse(data));
+
+      if (error) {
+        toast.error("An unexpected error occurred. Please try again.");
+        return;
+      }
+
+      if (result?.status === "success") {
+        toast.success("Course created successfully!", {
+          description: "Your course has been created.",
+        });
+        form.reset();
+        router.push(`/admin/courses`);
+      } else if (result.status === "error") {
+        toast.error(result.message);
+      }
     });
   };
 
@@ -374,8 +394,8 @@ export function CreateCourseForm() {
           <Button type="button" variant="outline" onClick={() => form.reset()}>
             Reset
           </Button>
-          <Button type="submit" form="new-course-form">
-            Create Course
+          <Button type="submit" form="new-course-form" disabled={isPending}>
+            {isPending ? "Creating..." : "Create Course"}
           </Button>
         </Field>
       </CardFooter>
