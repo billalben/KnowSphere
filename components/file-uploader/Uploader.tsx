@@ -109,19 +109,21 @@ export function Uploader({ onUploadComplete }: UploaderProps) {
         console.error(error);
         toast.error("Failed to upload file");
 
-        setFileState((prev) => ({
-          ...prev,
-          uploading: false,
-          progress: 0,
-          error: true,
-        }));
-      } finally {
-        setFileState((prev) => ({
-          ...prev,
-          uploading: false,
-          progress: 0,
-          error: false,
-        }));
+        setFileState((prev) => {
+          if (prev.objectUrl && !prev.objectUrl.startsWith("http")) {
+            URL.revokeObjectURL(prev.objectUrl);
+          }
+          return {
+            ...prev,
+            uploading: false,
+            progress: 0,
+            error: true,
+            objectUrl: undefined,
+            file: null,
+            key: undefined,
+            id: null,
+          };
+        });
       }
     },
     [onUploadComplete],

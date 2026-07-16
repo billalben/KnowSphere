@@ -37,15 +37,13 @@ export function RenderEmptyState({ isDragActive }: { isDragActive: boolean }) {
 export function RenderErrorState() {
   return (
     <div className="text-center">
-      <ImageIcon className="size-10 mx-auto mb-3" />
-
       <div className="flex items-center justify-center mx-auto size-12 rounded-full bg-destructive/30 mb-4">
         <ImageIcon className={cn("size-6 text-destructive")} />
       </div>
 
       <p className="text-base font-semibold">Upload Failed</p>
       <p className="text-xs text-muted-foreground mt-1">Something went wrong</p>
-      <p className="text-xl text-muted-foreground mt-1">
+      <p className="text-xl text-muted-foreground mt-4">
         Click or drag file to retry
       </p>
     </div>
