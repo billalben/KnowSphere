@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from "uuid";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { S3Client } from "@/lib/S3Client";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
+import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
+import { requireAdmin } from "@/app/data/admin/require-admin";
 
 export const fileUploadSchema = z.object({
   fileName: z.string().min(1, { message: "File name is required" }),
@@ -13,14 +15,42 @@ export const fileUploadSchema = z.object({
   isImage: z.boolean().optional(),
 });
 
+const aj = arcjet
+  .withRule(
+    detectBot({
+      mode: "LIVE",
+      allow: [],
+    }),
+  )
+  .withRule(
+    fixedWindow({
+      mode: "LIVE",
+      window: "1m",
+      max: 5,
+    }),
+  );
+
 export async function POST(request: Request) {
+  const session = await requireAdmin();
+
   try {
+    const decision = await aj.protect(request, {
+      fingerprint: session.user.id,
+    });
+
+    if (decision.isDenied()) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
     const body = await request.json();
 
     const validation = fileUploadSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json({ error: validation.error.message }, { status: 400 });
+      return NextResponse.json(
+        { error: validation.error.message },
+        { status: 400 },
+      );
     }
 
     const { fileName, contentType, size } = validation.data;
@@ -41,6 +71,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ presignedUrl, key: uniqueKey }, { status: 200 });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to upload file" },
+      { status: 500 },
+    );
   }
 }

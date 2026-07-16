@@ -1,11 +1,10 @@
-import "server-only";
-
 import { betterAuth } from "better-auth";
 import { emailOTP } from "better-auth/plugins";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import prisma from "./prisma";
 import { env } from "./env";
 import { resend } from "./resend";
+import { admin } from "better-auth/plugins";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -18,6 +17,7 @@ export const auth = betterAuth({
     },
   },
   plugins: [
+    admin(),
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {
         const { error } = await resend.emails.send({
