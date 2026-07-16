@@ -11,12 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-import {
-  LandPlotIcon,
-  LayoutDashboardIcon,
-  LogOutIcon,
-  UserIcon,
-} from "lucide-react";
+import { LandPlotIcon, LayoutDashboardIcon, LogOutIcon } from "lucide-react";
 import Link from "next/link";
 
 interface UserDropDownProps {

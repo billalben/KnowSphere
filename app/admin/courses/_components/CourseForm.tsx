@@ -38,11 +38,40 @@ import slugify from "slugify";
 import { formatSlug } from "@/lib/formatSlug";
 import { useTransition } from "react";
 import { tryCatch } from "@/hooks/try-catch";
-import { createCourse } from "../actions";
-import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import type { tApiResponse } from "@/types/api";
 
-export function CreateCourseForm() {
+export type CourseFormProps = {
+  initialValues?: Partial<CourseSchemaType>;
+  submitAction: (
+    data: CourseSchemaType,
+  ) => Promise<
+    | tApiResponse<unknown>
+    | { status: "success" | "error"; message: string; data: unknown }
+  >;
+  submitLabel?: string;
+  pendingLabel?: string;
+  successVerb?: string;
+  successDescription?: string;
+  redirectTo?: string;
+  onSubmitted?: () => void;
+  formId?: string;
+  showReset?: boolean;
+};
+
+export function CourseForm({
+  initialValues,
+  submitAction,
+  submitLabel = "Create Course",
+  pendingLabel = "Creating...",
+  successVerb = "created",
+  successDescription = "Your course has been created.",
+  redirectTo = "/admin/courses",
+  onSubmitted,
+  formId = "course-form",
+  showReset = true,
+}: CourseFormProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const form = useForm({
@@ -58,12 +87,13 @@ export function CreateCourseForm() {
       status: ECourseStatus.DRAFT,
       slug: "",
       category: "",
+      ...initialValues,
     },
   });
 
   const onSubmit = (data: CourseSchemaType) => {
     startTransition(async () => {
-      const { data: result, error } = await tryCatch(createCourse(data));
+      const { data: result, error } = await tryCatch(submitAction(data));
 
       if (error) {
         toast.error("An unexpected error occurred. Please try again.");
@@ -71,12 +101,14 @@ export function CreateCourseForm() {
       }
 
       if (result?.status === "success") {
-        toast.success("Course created successfully!", {
-          description: "Your course has been created.",
+        toast.success(`Course ${successVerb} successfully!`, {
+          description: successDescription,
         });
-        form.reset();
-        router.push(`/admin/courses`);
-      } else if (result.status === "error") {
+        onSubmitted?.();
+        if (redirectTo) {
+          router.push(redirectTo);
+        }
+      } else if (result?.status === "error") {
         toast.error(result.message);
       }
     });
@@ -87,12 +119,12 @@ export function CreateCourseForm() {
       <CardHeader>
         <CardTitle>Basic Information</CardTitle>
         <CardDescription>
-          Provide the basic details for the new course.
+          Provide the basic details for the course.
         </CardDescription>
       </CardHeader>
 
       <CardContent>
-        <form id="new-course-form" onSubmit={form.handleSubmit(onSubmit)}>
+        <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
             {/* Title */}
             <Controller
@@ -157,7 +189,6 @@ export function CreateCourseForm() {
                       </Button>
                     </div>
                     <FieldDescription>
-                      {/* URL-friendly version of the course title */}
                       {transformedSlug && transformedSlug !== field.value && (
                         <>
                           suggested slug name:{" "}
@@ -239,116 +270,123 @@ export function CreateCourseForm() {
               )}
             />
 
-            {/* Category */}
-            <Controller
-              name="category"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="category">Category</FieldLabel>
-                  <Input
-                    {...field}
-                    id="category"
-                    placeholder="e.g., Web Development"
-                    aria-invalid={fieldState.invalid}
-                  />
-                  <FieldDescription>
-                    Course category (at least 3 characters)
-                  </FieldDescription>
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
+            {/* Category + Level */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Controller
+                name="category"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="category">Category</FieldLabel>
+                    <Input
+                      {...field}
+                      id="category"
+                      placeholder="e.g., Web Development"
+                      aria-invalid={fieldState.invalid}
+                    />
+                    <FieldDescription>
+                      Course category (at least 3 characters)
+                    </FieldDescription>
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
 
-            {/* Price */}
-            <Controller
-              name="price"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="price">Price</FieldLabel>
-                  <Input
-                    {...field}
-                    id="price"
-                    type="number"
-                    min="0"
-                    step="1.00"
-                    placeholder="0.00"
-                    aria-invalid={fieldState.invalid}
-                    value={String(field.value ?? "")}
-                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                  />
-                  <FieldDescription>
-                    Course price in dollars (minimum 0)
-                  </FieldDescription>
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
+              <Controller
+                name="level"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="level">Level</FieldLabel>
+                    <Select
+                      name={field.name}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger
+                        id="level"
+                        aria-invalid={fieldState.invalid}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.values(ECourseLevel).map((level) => (
+                          <SelectItem key={level} value={level}>
+                            {level.charAt(0) + level.slice(1).toLowerCase()}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FieldDescription>
+                      Choose the difficulty level
+                    </FieldDescription>
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+            </div>
 
-            {/* Duration */}
-            <Controller
-              name="duration"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="duration">Duration (minutes)</FieldLabel>
-                  <Input
-                    {...field}
-                    id="duration"
-                    type="number"
-                    min="1"
-                    placeholder="60"
-                    aria-invalid={fieldState.invalid}
-                    value={String(field.value ?? "")}
-                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                  />
-                  <FieldDescription>
-                    Total course duration in minutes
-                  </FieldDescription>
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
+            {/* Duration + Price */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Controller
+                name="duration"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="duration">
+                      Duration (minutes)
+                    </FieldLabel>
+                    <Input
+                      {...field}
+                      id="duration"
+                      type="number"
+                      min="1"
+                      placeholder="60"
+                      aria-invalid={fieldState.invalid}
+                      value={String(field.value ?? "")}
+                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                    />
+                    <FieldDescription>
+                      Total course duration in minutes
+                    </FieldDescription>
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
 
-            {/* Level */}
-            <Controller
-              name="level"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="level">Level</FieldLabel>
-                  <Select
-                    name={field.name}
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  >
-                    <SelectTrigger id="level" aria-invalid={fieldState.invalid}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.values(ECourseLevel).map((level) => (
-                        <SelectItem key={level} value={level}>
-                          {level.charAt(0) + level.slice(1).toLowerCase()}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FieldDescription>
-                    Choose the difficulty level
-                  </FieldDescription>
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
+              <Controller
+                name="price"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="price">Price</FieldLabel>
+                    <Input
+                      {...field}
+                      id="price"
+                      type="number"
+                      min="0"
+                      step="1.00"
+                      placeholder="0.00"
+                      aria-invalid={fieldState.invalid}
+                      value={String(field.value ?? "")}
+                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                    />
+                    <FieldDescription>
+                      Course price in dollars (minimum 0)
+                    </FieldDescription>
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+            </div>
 
             {/* Status */}
             <Controller
@@ -391,11 +429,17 @@ export function CreateCourseForm() {
 
       <CardFooter>
         <Field orientation="horizontal" className="justify-end">
-          <Button type="button" variant="outline" onClick={() => form.reset()}>
-            Reset
-          </Button>
-          <Button type="submit" form="new-course-form" disabled={isPending}>
-            {isPending ? "Creating..." : "Create Course"}
+          {showReset && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => form.reset()}
+            >
+              Reset
+            </Button>
+          )}
+          <Button type="submit" form={formId} disabled={isPending}>
+            {isPending ? pendingLabel : submitLabel}
           </Button>
         </Field>
       </CardFooter>

@@ -1,22 +1,20 @@
-import { buttonVariants } from "@/components/ui/button";
-import { ArrowLeftIcon } from "lucide-react";
-import Link from "next/link";
-import { CreateCourseForm } from "./_components/CreateCourseForm";
+import { PageHeader } from "@/components/admin/page-header";
+import { CourseForm } from "../_components/CourseForm";
+import { createCourse } from "./actions";
 
 export default function NewCoursePage() {
   return (
     <>
-      <div className="mb-4 flex items-center gap-4">
-        <Link
-          href="/admin/courses"
-          className={buttonVariants({ variant: "outline", size: "icon" })}
-        >
-          <ArrowLeftIcon size={16} />
-        </Link>
-        <h1 className="text-xl font-bold">Create New Course</h1>
-      </div>
+      <PageHeader backHref="/admin/courses" title="Create New Course" />
 
-      <CreateCourseForm />
+      <CourseForm
+        submitAction={createCourse}
+        submitLabel="Create Course"
+        pendingLabel="Creating..."
+        successVerb="created"
+        successDescription="Your course has been created."
+        redirectTo="/admin/courses"
+      />
     </>
   );
 }
