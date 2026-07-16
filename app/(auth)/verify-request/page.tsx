@@ -17,10 +17,10 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { LoaderIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { Suspense, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const [otp, setOtp] = useState("");
   const [emailPending, startEmailTransition] = useTransition();
 
@@ -97,5 +97,19 @@ export default function VerifyEmailPage() {
         </Button>
       </CardContent>
     </Card>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center">
+          <LoaderIcon className="animate-spin" />
+        </div>
+      }
+    >
+      <VerifyEmailContent />
+    </Suspense>
   );
 }
