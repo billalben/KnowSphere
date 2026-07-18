@@ -78,7 +78,7 @@ export function AdminCourseCard({ course }: iAppProps) {
           <DropdownMenu>
             <DropdownMenuTrigger
               className={cn(
-                "-mr-1.5 -mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground data-[popup-open]:bg-muted data-[popup-open]:text-foreground",
+                "-mr-1.5 -mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground data-popup-open:bg-muted data-popup-open:text-foreground",
               )}
               aria-label="Course actions"
             >

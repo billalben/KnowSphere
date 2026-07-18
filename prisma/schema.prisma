@@ -118,4 +118,40 @@ model Course {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade) // if the user is deleted, their courses are deleted too
   userId String
+
+  courseChapters CourseChapter[]
+}
+
+model CourseChapter {
+  id String @id @default(cuid())
+
+  title String
+  position Int
+  @@unique([courseId, position])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId String
+
+  lessons Lesson[]
+}
+
+model Lesson {
+  id String @id @default(cuid())
+
+  title String
+  description String?
+  thumbnailKey String?
+  videoKey String?
+
+  position Int
+  @@unique([chapterId, position])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  chapter CourseChapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  chapterId String
 }
