@@ -3,6 +3,8 @@ import { PageHeader } from "@/components/admin/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EditCourseForm } from "./_components/EditCourseForm";
 import { EditCourseStructureForm } from "./_components/EditCourseStructureForm";
+import NewChapterModal from "./_components/NewChapterModal";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Params = Promise<{ courseId: string }>;
 
@@ -25,7 +27,15 @@ export default async function EditCoursePage({ params }: { params: Params }) {
         </TabsContent>
 
         <TabsContent value="course-structure">
-          <EditCourseStructureForm course={course} />
+          <Card>
+            <CardHeader className="flex items-center justify-between">
+              <CardTitle>Course Structure</CardTitle>
+              <NewChapterModal courseId={course.id} />
+            </CardHeader>
+            <CardContent>
+              <EditCourseStructureForm course={course} />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

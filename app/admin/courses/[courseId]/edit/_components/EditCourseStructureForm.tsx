@@ -3,17 +3,10 @@
 import { useState, useTransition } from "react";
 import { DragDropProvider } from "@dnd-kit/react";
 import { isSortable, useSortable } from "@dnd-kit/react/sortable";
-import {
-  ChevronDown,
-  ChevronRight,
-  GripVertical,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { ChevronDown, ChevronRight, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
@@ -24,6 +17,9 @@ import { cn } from "@/lib/utils";
 import { tAdminGetCourse } from "@/app/data/admin/admin-get-course";
 import { reorderChapters, reorderLessons } from "../actions";
 import type { tApiResponse } from "@/types/api";
+import NewLessonModal from "./NewLessonModal";
+import DeleteLessonModal from "./DeleteLessonModal";
+import DeleteChapterModal from "./DeleteChapterModal";
 
 type EditCourseStructureFormProps = {
   course: tAdminGetCourse;
@@ -37,7 +33,17 @@ type Chapter = {
   lessons: Lesson[];
 };
 
-function SortableLesson({ lesson, index }: { lesson: Lesson; index: number }) {
+function SortableLesson({
+  lesson,
+  index,
+  courseId,
+  chapterId,
+}: {
+  lesson: Lesson;
+  index: number;
+  courseId: string;
+  chapterId: string;
+}) {
   const { ref, handleRef, isDragging } = useSortable({
     id: lesson.id,
     index,
@@ -60,24 +66,30 @@ function SortableLesson({ lesson, index }: { lesson: Lesson; index: number }) {
         <GripVertical className="size-4" />
       </button>
       <span className="flex-1 truncate">{lesson.title}</span>
-      <Button
+      {/* <Button
         variant="ghost"
         size="icon-sm"
         type="button"
         aria-label="Delete lesson"
       >
         <Trash2 />
-      </Button>
+      </Button> */}
+      <DeleteLessonModal
+        lessonId={lesson.id}
+        courseId={courseId}
+        chapterId={chapterId}
+      />
     </li>
   );
 }
 
 function SortableChapter({
+  courseId,
   chapter,
   index,
   onReorderLessons,
-  isReorderingLessons,
 }: {
+  courseId: string;
   chapter: Chapter;
   index: number;
   onReorderLessons: (chapterId: string, next: Lesson[]) => void;
@@ -115,14 +127,7 @@ function SortableChapter({
               </span>
             </CollapsibleTrigger>
 
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              type="button"
-              aria-label="Delete chapter"
-            >
-              <Trash2 />
-            </Button>
+            <DeleteChapterModal courseId={courseId} chapterId={chapter.id} />
           </div>
 
           <CollapsibleContent>
@@ -144,21 +149,18 @@ function SortableChapter({
               >
                 <ul className="flex flex-col gap-2">
                   {chapter.lessons.map((lesson, i) => (
-                    <SortableLesson key={lesson.id} lesson={lesson} index={i} />
+                    <SortableLesson
+                      key={lesson.id}
+                      index={i}
+                      courseId={courseId}
+                      chapterId={chapter.id}
+                      lesson={lesson}
+                    />
                   ))}
                 </ul>
               </DragDropProvider>
 
-              <Button
-                variant="outline"
-                size="sm"
-                type="button"
-                className="mt-3 w-full"
-                disabled={isReorderingLessons}
-              >
-                <Plus />
-                Add Lesson
-              </Button>
+              <NewLessonModal courseId={courseId} chapterId={chapter.id} />
             </div>
           </CollapsibleContent>
         </Collapsible>
@@ -264,6 +266,7 @@ export function EditCourseStructureForm({
         {chapters.map((chapter, index) => (
           <SortableChapter
             key={chapter.id}
+            courseId={course.id}
             chapter={chapter}
             index={index}
             onReorderLessons={handleReorderLessons}
@@ -271,11 +274,6 @@ export function EditCourseStructureForm({
           />
         ))}
       </DragDropProvider>
-
-      <Button variant="outline" className="w-full" type="button">
-        <Plus />
-        Add Chapter
-      </Button>
     </div>
   );
 }

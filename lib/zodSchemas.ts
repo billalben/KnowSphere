@@ -36,4 +36,25 @@ export const courseSchema = z.object({
   category: z.string().min(3, "Category must be at least 3 characters long"),
 });
 
+export const chapterSchema = z.object({
+  name: z.string().min(3, "Name must be at least 3 characters long"),
+  courseId: z.cuid({ message: "Invalid course ID" }),
+});
+
+export const lessonSchema = z.object({
+  name: z.string().min(3, "Name must be at least 3 characters long"),
+  courseId: z.cuid({ message: "Invalid course ID" }),
+  chapterId: z.cuid({ message: "Invalid chapter ID" }),
+
+  description: z
+    .string()
+    .min(3, "Description must be at least 3 characters long")
+    .optional(),
+
+  videoKey: z.string().optional().nullable(),
+  thumbnailKey: z.string().optional().nullable(),
+});
+
 export type CourseSchemaType = z.infer<typeof courseSchema>;
+export type ChapterSchemaType = z.infer<typeof chapterSchema>;
+export type LessonSchemaType = z.infer<typeof lessonSchema>;
