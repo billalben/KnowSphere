@@ -13,6 +13,7 @@ import { Loader2Icon, Trash2Icon } from "lucide-react";
 import { tryCatch } from "@/hooks/try-catch";
 import { deleteLesson } from "../actions";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function DeleteLessonModal({
   lessonId,
@@ -23,6 +24,7 @@ export default function DeleteLessonModal({
   courseId: string;
   chapterId: string;
 }) {
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const handleOpenChange = (open: boolean) => {
     setIsModalOpen(open);
@@ -44,6 +46,7 @@ export default function DeleteLessonModal({
       if (result?.status === "success") {
         toast.success(result.message);
         setIsModalOpen(false);
+        router.refresh();
       } else if (result?.status === "error") {
         toast.error(result.message);
       }

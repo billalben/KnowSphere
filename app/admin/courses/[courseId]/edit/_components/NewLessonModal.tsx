@@ -26,6 +26,7 @@ import { Controller, useForm } from "react-hook-form";
 import { tryCatch } from "@/hooks/try-catch";
 import { createLesson } from "../actions";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function NewLessonModal({
   courseId,
@@ -34,6 +35,7 @@ export default function NewLessonModal({
   courseId: string;
   chapterId: string;
 }) {
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -63,6 +65,7 @@ export default function NewLessonModal({
         toast.success(result.message);
         form.reset();
         setIsModalOpen(false);
+        router.refresh();
       } else if (result?.status === "error") {
         toast.error(result.message);
       }

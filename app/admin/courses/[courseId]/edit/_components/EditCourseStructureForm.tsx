@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { DragDropProvider } from "@dnd-kit/react";
 import { isSortable, useSortable } from "@dnd-kit/react/sortable";
 import { ChevronDown, ChevronRight, GripVertical } from "lucide-react";
@@ -172,7 +173,8 @@ function SortableChapter({
 export function EditCourseStructureForm({
   course,
 }: EditCourseStructureFormProps) {
-  const [chapters, setChapters] = useState<Chapter[]>(
+  const router = useRouter();
+  const chaptersFromCourse = useMemo<Chapter[]>(
     () =>
       course.courseChapters?.map((chapter) => ({
         id: chapter.id,
@@ -185,7 +187,19 @@ export function EditCourseStructureForm({
             position: lesson.position,
           })) ?? [],
       })) ?? [],
+    [course],
   );
+
+  const [chapters, setChapters] = useState<Chapter[]>(chaptersFromCourse);
+
+  // Sync local state when the server-fetched course changes (e.g. after the
+  // modals below call router.refresh() on a create/delete, or after a reorder
+  // round-trip). useState only consumes the initial value on mount, so without
+  // this the list would stay stale until a full page reload.
+  useEffect(() => {
+    setChapters(chaptersFromCourse);
+  }, [chaptersFromCourse]);
+
   const [, startChapterReorder] = useTransition();
   const [, startLessonReorder] = useTransition();
   const [reorderingLessonChapterId, setReorderingLessonChapterId] = useState<
@@ -209,7 +223,10 @@ export function EditCourseStructureForm({
 
       if ((result as tApiResponse<unknown>)?.status === "error") {
         toast.error((result as tApiResponse<unknown>).message);
+        return;
       }
+
+      router.refresh();
     });
   };
 
@@ -242,7 +259,10 @@ export function EditCourseStructureForm({
 
       if ((result as tApiResponse<unknown>)?.status === "error") {
         toast.error((result as tApiResponse<unknown>).message);
+        return;
       }
+
+      router.refresh();
     });
   };
 

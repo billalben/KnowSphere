@@ -263,7 +263,17 @@ export async function deleteLesson({
 
     const remainingLessons = lessons.filter((lesson) => lesson.id !== lessonId);
 
-    const updates = remainingLessons.map((lesson, index) =>
+    // Two-step reposition to avoid @@unique([chapterId, position]) violations:
+    // move remaining lessons to temporary negative positions, delete the target,
+    // then set final positions. Order matters — the deleted lesson keeps its
+    // position until the delete runs, so direct repositioning would clash.
+    const tempUpdates = remainingLessons.map((lesson, index) =>
+      prisma.lesson.update({
+        where: { id: lesson.id },
+        data: { position: -(index + 1) },
+      }),
+    );
+    const finalUpdates = remainingLessons.map((lesson, index) =>
       prisma.lesson.update({
         where: { id: lesson.id },
         data: { position: index + 1 },
@@ -271,8 +281,9 @@ export async function deleteLesson({
     );
 
     await prisma.$transaction([
-      ...updates,
-      prisma.lesson.delete({ where: { id: lessonId, chapterId } }),
+      ...tempUpdates,
+      prisma.lesson.delete({ where: { id: lessonId } }),
+      ...finalUpdates,
     ]);
 
     revalidatePath(`/admin/courses/${courseId}/edit`);
@@ -324,7 +335,18 @@ export async function deleteChapter({
       (chapter) => chapter.id !== chapterId,
     );
 
-    const updates = remainingChapters.map((chapter, index) =>
+    // Two-step reposition to avoid @@unique([courseId, position]) violations:
+    // move remaining chapters to temporary negative positions, delete the
+    // target, then set final positions. Without temp moves, sequential updates
+    // would clash with the not-yet-deleted chapter's position (and with each
+    // other mid-transaction), throwing inside $transaction.
+    const tempUpdates = remainingChapters.map((chapter, index) =>
+      prisma.courseChapter.update({
+        where: { id: chapter.id },
+        data: { position: -(index + 1) },
+      }),
+    );
+    const finalUpdates = remainingChapters.map((chapter, index) =>
       prisma.courseChapter.update({
         where: { id: chapter.id },
         data: { position: index + 1 },
@@ -332,8 +354,9 @@ export async function deleteChapter({
     );
 
     await prisma.$transaction([
-      ...updates,
+      ...tempUpdates,
       prisma.courseChapter.delete({ where: { id: chapterId } }),
+      ...finalUpdates,
     ]);
 
     revalidatePath(`/admin/courses/${courseId}/edit`);
