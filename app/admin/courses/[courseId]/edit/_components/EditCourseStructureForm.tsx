@@ -4,7 +4,14 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { DragDropProvider } from "@dnd-kit/react";
 import { isSortable, useSortable } from "@dnd-kit/react/sortable";
-import { ChevronDown, ChevronRight, GripVertical } from "lucide-react";
+import {
+  BookOpen,
+  ChevronDown,
+  ChevronRight,
+  GripVertical,
+  PlayCircle,
+} from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 
 import { Card } from "@/components/ui/card";
@@ -66,15 +73,16 @@ function SortableLesson({
       >
         <GripVertical className="size-4" />
       </button>
-      <span className="flex-1 truncate">{lesson.title}</span>
-      {/* <Button
-        variant="ghost"
-        size="icon-sm"
-        type="button"
-        aria-label="Delete lesson"
-      >
-        <Trash2 />
-      </Button> */}
+      <span className="flex-1 truncate">
+        <Link
+          href={`/admin/courses/${courseId}/${chapterId}/${lesson.id}`}
+          className="flex items-center gap-2 hover:text-primary"
+        >
+          <PlayCircle className="size-4 shrink-0 text-muted-foreground" />
+          <span className="truncate">{lesson.title}</span>
+        </Link>
+      </span>
+
       <DeleteLessonModal
         lessonId={lesson.id}
         courseId={courseId}
@@ -122,6 +130,7 @@ function SortableChapter({
               ) : (
                 <ChevronRight className="size-4 text-muted-foreground" />
               )}
+              <BookOpen className="size-4 shrink-0 text-muted-foreground" />
               <span className="font-medium">{chapter.title}</span>
               <span className="ml-1 text-xs text-muted-foreground">
                 ({chapter.lessons.length} lessons)
