@@ -9,6 +9,7 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <SidebarProvider
+      className="h-svh"
       style={
         {
           "--sidebar-width": "calc(var(--spacing) * 52)",
@@ -23,8 +24,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         {/* Header */}
         <AdminHeader />
 
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
+        <div className="flex flex-1 min-h-0 flex-col overflow-y-auto">
+          <div className="@container/main flex min-h-full flex-col gap-2">
             <div className="flex flex-col gap-4 p-4 md:gap-6 lg:py-6">
               {children}
             </div>
