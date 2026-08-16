@@ -38,6 +38,7 @@ import slugify from "slugify";
 import { formatSlug } from "@/lib/formatSlug";
 import { useTransition } from "react";
 import { tryCatch } from "@/hooks/try-catch";
+import { useConfetti } from "@/hooks/use-confetti";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { tApiResponse } from "@/types/api";
@@ -58,6 +59,7 @@ export type CourseFormProps = {
   onSubmitted?: () => void;
   formId?: string;
   showReset?: boolean;
+  fireConfetti?: boolean;
 };
 
 export function CourseForm({
@@ -71,9 +73,11 @@ export function CourseForm({
   onSubmitted,
   formId = "course-form",
   showReset = true,
+  fireConfetti = false,
 }: CourseFormProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const triggerConfetti = useConfetti();
   const form = useForm({
     resolver: zodResolver(courseSchema),
     defaultValues: {
@@ -104,6 +108,9 @@ export function CourseForm({
         toast.success(`Course ${successVerb} successfully!`, {
           description: successDescription,
         });
+        if (fireConfetti) {
+          triggerConfetti();
+        }
         onSubmitted?.();
         if (redirectTo) {
           router.push(redirectTo);

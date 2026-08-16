@@ -1,6 +1,7 @@
 "use client";
 
 import { ComponentProps } from "react";
+import { usePathname } from "next/navigation";
 
 import {
   LayersIcon,
@@ -26,7 +27,14 @@ import {
 import Link from "next/link";
 import NavUser from "@/components/nav-user";
 
+function isNavItemActive(pathname: string, url: string) {
+  if (url === "#") return false;
+  return pathname === url || pathname.startsWith(url + "/");
+}
+
 export function AdminSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
+
   const navMain = [
     {
       title: "Dashboard",
@@ -77,8 +85,12 @@ export function AdminSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 
       {/* Sidebar Content */}
       <SidebarContent>
-        <NavMain items={navMain} />
-        <NavSecondary items={navSecondary} className="mt-auto" />
+        <NavMain items={navMain} pathname={pathname} />
+        <NavSecondary
+          items={navSecondary}
+          pathname={pathname}
+          className="mt-auto"
+        />
       </SidebarContent>
 
       {/* Sidebar Footer */}
@@ -97,9 +109,10 @@ interface IItems {
 
 interface NavMainProps {
   items: IItems[];
+  pathname: string;
 }
 
-function NavMain({ items }: NavMainProps) {
+function NavMain({ items, pathname }: NavMainProps) {
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -119,6 +132,7 @@ function NavMain({ items }: NavMainProps) {
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
                 title={item.title}
+                isActive={isNavItemActive(pathname, item.url)}
                 render={<Link href={item.url} />}
               >
                 {item.icon}
@@ -134,10 +148,12 @@ function NavMain({ items }: NavMainProps) {
 
 interface NavSecondaryProps {
   items: IItems[];
+  pathname: string;
 }
 
 function NavSecondary({
   items,
+  pathname,
   ...props
 }: NavSecondaryProps & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   return (
@@ -146,7 +162,10 @@ function NavSecondary({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton render={<Link href={item.url} />}>
+              <SidebarMenuButton
+                isActive={isNavItemActive(pathname, item.url)}
+                render={<Link href={item.url} />}
+              >
                 {item.icon}
                 <span>{item.title}</span>
               </SidebarMenuButton>

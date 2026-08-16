@@ -26,7 +26,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
         <div className="flex flex-1 min-h-0 flex-col overflow-y-auto">
           <div className="@container/main flex min-h-full flex-col gap-2">
-            <div className="flex flex-col gap-4 p-4 md:gap-6 lg:py-6">
+            <div className="flex flex-col h-full gap-4 p-4 md:gap-6 lg:py-6">
               {children}
             </div>
           </div>

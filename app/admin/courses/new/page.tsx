@@ -14,6 +14,7 @@ export default function NewCoursePage() {
         successVerb="created"
         successDescription="Your course has been created."
         redirectTo="/admin/courses"
+        fireConfetti
       />
     </>
   );
