@@ -27,7 +27,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { lessonSchema, type LessonSchemaType } from "@/lib/zodSchemas";
 import { tryCatch } from "@/hooks/try-catch";
-import type { tApiResponse } from "@/types/api";
 
 import { updateLesson } from "../actions";
 import type { TAdminGetLesson } from "@/app/data/admin/admin-get-lesson";
@@ -161,6 +160,7 @@ export function LessonForm({ data, courseId, chapterId }: iAppProps) {
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="videoKey">Video</FieldLabel>
                   <Uploader
+                    fileType="video"
                     onUploadComplete={(key) => {
                       field.onChange(key);
                     }}

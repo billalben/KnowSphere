@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { FileRejection, useDropzone } from "react-dropzone";
+import { type Accept, type FileRejection, useDropzone } from "react-dropzone";
 import { Card, CardContent } from "../ui/card";
 import { cn } from "@/lib/utils";
 import {
@@ -9,6 +9,7 @@ import {
   RenderErrorState,
   RenderImageState,
   RenderUploadingState,
+  RenderVideoState,
 } from "./RenderState";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
@@ -27,9 +28,19 @@ interface iUploaderState {
 
 interface UploaderProps {
   onUploadComplete?: (key: string) => void;
+  fileType?: "image" | "video";
 }
 
-export function Uploader({ onUploadComplete }: UploaderProps) {
+const MAX_IMAGE_SIZE = 3 * 1024 * 1024; // 3MB
+const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
+
+export function Uploader({
+  onUploadComplete,
+  fileType = "image",
+}: UploaderProps) {
+  const maxSize = fileType === "video" ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+  const maxSizeLabel = fileType === "video" ? "100MB" : "3MB";
+
   const [fileState, setFileState] = useState<iUploaderState>({
     error: false,
     file: null,
@@ -37,7 +48,7 @@ export function Uploader({ onUploadComplete }: UploaderProps) {
     uploading: false,
     progress: 0,
     isDeleting: false,
-    fileType: "image",
+    fileType,
   });
 
   const uploadFile = useCallback(
@@ -49,7 +60,6 @@ export function Uploader({ onUploadComplete }: UploaderProps) {
       }));
 
       try {
-        // get presigned url
         const response = await fetch("/api/s3/upload", {
           method: "POST",
           headers: {
@@ -59,7 +69,7 @@ export function Uploader({ onUploadComplete }: UploaderProps) {
             fileName: file.name,
             contentType: file.type,
             size: file.size,
-            isImage: true, // TODO: make this dynamic
+            isImage: fileType === "image",
           }),
         });
 
@@ -69,7 +79,6 @@ export function Uploader({ onUploadComplete }: UploaderProps) {
 
         const { presignedUrl, key } = await response.json();
 
-        // upload file to s3
         await new Promise((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhr.upload.onprogress = (event) => {
@@ -126,7 +135,7 @@ export function Uploader({ onUploadComplete }: UploaderProps) {
         });
       }
     },
-    [onUploadComplete],
+    [fileType, onUploadComplete],
   );
 
   const onDrop = useCallback(
@@ -146,13 +155,13 @@ export function Uploader({ onUploadComplete }: UploaderProps) {
           error: false,
           id: uuidv4(),
           isDeleting: false,
-          fileType: "image",
+          fileType,
         });
 
         uploadFile(file);
       }
     },
-    [fileState.objectUrl, uploadFile],
+    [fileState.objectUrl, fileType, uploadFile],
   );
 
   const handleRemoveFile = useCallback(async () => {
@@ -183,7 +192,7 @@ export function Uploader({ onUploadComplete }: UploaderProps) {
         isDeleting: false,
         error: false,
         objectUrl: undefined,
-        fileType: "image",
+        fileType,
         id: null,
         progress: 0,
         uploading: false,
@@ -199,7 +208,7 @@ export function Uploader({ onUploadComplete }: UploaderProps) {
         error: true,
       }));
     }
-  }, [fileState]);
+  }, [fileState, fileType]);
 
   function rejectefFiles(fileRejection: FileRejection[]) {
     if (fileRejection.length) {
@@ -216,7 +225,7 @@ export function Uploader({ onUploadComplete }: UploaderProps) {
       );
 
       if (fileSizeTooBig) {
-        toast.error("File too big, max is 3MB");
+        toast.error(`File too big, max is ${maxSizeLabel}`);
       }
     }
   }
@@ -231,6 +240,16 @@ export function Uploader({ onUploadComplete }: UploaderProps) {
     }
 
     if (fileState.objectUrl) {
+      if (fileState.fileType === "video") {
+        return (
+          <RenderVideoState
+            objectUrl={fileState.objectUrl}
+            isDeleting={fileState.isDeleting}
+            handleRemoveFile={handleRemoveFile}
+          />
+        );
+      }
+
       return (
         <RenderImageState
           objectUrl={fileState.objectUrl}
@@ -240,7 +259,7 @@ export function Uploader({ onUploadComplete }: UploaderProps) {
       );
     }
 
-    return <RenderEmptyState isDragActive={isDragActive} />;
+    return <RenderEmptyState isDragActive={isDragActive} fileType={fileType} />;
   }
 
   useEffect(() => {
@@ -251,12 +270,17 @@ export function Uploader({ onUploadComplete }: UploaderProps) {
     };
   }, [fileState.objectUrl]);
 
+  const accept: Accept =
+    fileType === "video"
+      ? { "video/*": [".mp4", ".mov", ".webm", ".mkv", ".avi"] }
+      : { "image/*": [] };
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { "image/*": [] },
+    accept,
     maxFiles: 1,
     multiple: false,
-    maxSize: 3 * 1024 * 1024, // 3mb
+    maxSize,
     onDropRejected: rejectefFiles,
     disabled: fileState.uploading || !!fileState.objectUrl,
   });
