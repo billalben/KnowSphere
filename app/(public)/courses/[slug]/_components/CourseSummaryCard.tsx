@@ -1,0 +1,156 @@
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { type tCourseDetail } from "@/app/data/course/get-course-by-slug";
+import {
+  AwardIcon,
+  BookmarkIcon,
+  BookOpenIcon,
+  ClockIcon,
+  GraduationCapIcon,
+  InfinityIcon,
+  MonitorIcon,
+  PlayCircleIcon,
+  SmartphoneIcon,
+  TagIcon,
+  type LucideIcon,
+} from "lucide-react";
+
+import {
+  formatDate,
+  formatDuration,
+  formatPrice,
+} from "../_lib/format-duration";
+
+interface CourseSummaryCardProps {
+  course: tCourseDetail;
+  totalLessons: number;
+}
+
+interface StatItemProps {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+}
+
+function StatItem({ icon: Icon, label, value }: StatItemProps) {
+  return (
+    <div className="flex flex-col gap-1 rounded-lg bg-muted/40 p-3">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Icon className="size-3" />
+        {label}
+      </div>
+      <div className="text-sm font-medium leading-snug">{value}</div>
+    </div>
+  );
+}
+
+interface BenefitItemProps {
+  icon: LucideIcon;
+  label: string;
+}
+
+function BenefitItem({ icon: Icon, label }: BenefitItemProps) {
+  return (
+    <li className="flex items-center gap-2.5 text-sm">
+      <Icon className="size-4 shrink-0 text-primary" aria-hidden />
+      <span>{label}</span>
+    </li>
+  );
+}
+
+const BENEFITS: BenefitItemProps[] = [
+  { icon: InfinityIcon, label: "Lifetime access" },
+  { icon: AwardIcon, label: "Certificate of completion" },
+  { icon: SmartphoneIcon, label: "Access on mobile" },
+  { icon: MonitorIcon, label: "Access on desktop" },
+  { icon: PlayCircleIcon, label: "Downloadable resources" },
+];
+
+export function CourseSummaryCard({
+  course,
+  totalLessons,
+}: CourseSummaryCardProps) {
+  const levelLabel =
+    course.level.charAt(0) + course.level.slice(1).toLowerCase();
+  const chaptersCount = course.courseChapters.length;
+  const isFree = !course.price;
+
+  return (
+    <Card className="overflow-hidden shadow-sm lg:shadow-md">
+      <CardHeader className="space-y-2">
+        <div className="flex items-baseline gap-2">
+          <CardTitle className="text-3xl font-bold tracking-tight">
+            {formatPrice(course.price)}
+          </CardTitle>
+          {!isFree && (
+            <span className="text-sm text-muted-foreground line-through">
+              ${(course.price * 1.5).toFixed(2)}
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          One-time payment • Lifetime access
+        </p>
+      </CardHeader>
+
+      <CardContent className="space-y-5">
+        <div className="space-y-2">
+          <Button className="w-full" size="lg">
+            {isFree ? "Enroll for free" : "Enroll now"}
+          </Button>
+          <Button variant="outline" className="w-full" size="lg">
+            <BookmarkIcon className="size-4" />
+            Add to wishlist
+          </Button>
+        </div>
+
+        <Separator />
+
+        <div className="grid grid-cols-2 gap-2.5">
+          <StatItem
+            icon={ClockIcon}
+            label="Duration"
+            value={formatDuration(course.duration)}
+          />
+          <StatItem
+            icon={GraduationCapIcon}
+            label="Difficulty"
+            value={levelLabel}
+          />
+          <StatItem
+            icon={TagIcon}
+            label="Category"
+            value={course.category ?? "Uncategorized"}
+          />
+          <StatItem
+            icon={BookOpenIcon}
+            label="Chapters"
+            value={`${chaptersCount} ${chaptersCount === 1 ? "chapter" : "chapters"}`}
+          />
+          <StatItem
+            icon={PlayCircleIcon}
+            label="Total lessons"
+            value={`${totalLessons} ${totalLessons === 1 ? "lesson" : "lessons"}`}
+          />
+          <StatItem
+            icon={ClockIcon}
+            label="Last updated"
+            value={formatDate(course.updatedAt)}
+          />
+        </div>
+
+        <Separator />
+
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold">This course includes:</h3>
+          <ul className="space-y-2.5">
+            {BENEFITS.map((benefit) => (
+              <BenefitItem key={benefit.label} {...benefit} />
+            ))}
+          </ul>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
