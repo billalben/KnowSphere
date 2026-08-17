@@ -1,10 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useQueryStates, debounce } from "nuqs";
 
 import { type tCourse } from "@/app/data/course/get-all-courses";
 import { CourseCard } from "./CourseCard";
 import { CourseListRow } from "./CourseListRow";
+import { useViewMode } from "../_hooks/use-view-mode";
+import {
+  coursesSearchParams,
+  LEVEL_OPTIONS,
+  SORT_OPTIONS,
+  type LevelFilter,
+  type SortKey,
+  type ViewMode,
+} from "../_lib/courses-filters";
 import { EmptyState } from "@/components/general/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,35 +36,9 @@ import {
   XIcon,
 } from "lucide-react";
 
-type LevelFilter = "All" | "Beginner" | "Intermediate" | "Advanced";
-
-type SortKey =
-  | "newest"
-  | "price-asc"
-  | "price-desc"
-  | "duration-asc"
-  | "duration-desc";
-
-type ViewMode = "grid" | "list";
-
 interface CoursesExplorerProps {
   courses: tCourse[];
 }
-
-const LEVELS: { value: LevelFilter; label: string }[] = [
-  { value: "All", label: "All levels" },
-  { value: "Beginner", label: "Beginner" },
-  { value: "Intermediate", label: "Intermediate" },
-  { value: "Advanced", label: "Advanced" },
-];
-
-const SORTS: { value: SortKey; label: string }[] = [
-  { value: "newest", label: "Newest" },
-  { value: "price-asc", label: "Price: low to high" },
-  { value: "price-desc", label: "Price: high to low" },
-  { value: "duration-asc", label: "Duration: short to long" },
-  { value: "duration-desc", label: "Duration: long to short" },
-];
 
 function matchesLevel(course: tCourse, level: LevelFilter): boolean {
   if (level === "All") return true;
@@ -67,6 +51,13 @@ function matchesQuery(course: tCourse, q: string): boolean {
     course.title.toLowerCase().includes(q) ||
     course.smallDesc.toLowerCase().includes(q)
   );
+}
+
+function findLabel<T extends string>(
+  options: { value: T; label: string }[],
+  value: string,
+): string {
+  return options.find((o) => o.value === value)?.label ?? value;
 }
 
 function sortCourses(courses: tCourse[], sort: SortKey): tCourse[] {
@@ -90,32 +81,52 @@ function sortCourses(courses: tCourse[], sort: SortKey): tCourse[] {
 }
 
 export function CoursesExplorer({ courses }: CoursesExplorerProps) {
-  const [query, setQuery] = useState("");
-  const [level, setLevel] = useState<LevelFilter>("All");
-  const [sort, setSort] = useState<SortKey>("newest");
-  const [view, setView] = useState<ViewMode>("grid");
+  const [{ q, level, sort }, setParams] = useQueryStates(coursesSearchParams, {
+    history: "replace",
+    shallow: true,
+  });
+
+  const [view, setView] = useViewMode();
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const query = q.trim().toLowerCase();
     return courses.filter(
-      (course) => matchesLevel(course, level) && matchesQuery(course, q),
+      (course) => matchesLevel(course, level) && matchesQuery(course, query),
     );
-  }, [courses, level, query]);
+  }, [courses, level, q]);
 
   const sorted = useMemo(() => sortCourses(filtered, sort), [filtered, sort]);
 
   const noResults = sorted.length === 0;
-  const hasFilters = query !== "" || level !== "All" || sort !== "newest";
+  const hasFilters = q !== "" || level !== "All" || sort !== "newest";
+
+  function handleQueryChange(value: string) {
+    setParams({ q: value }, { limitUrlUpdates: debounce(300) });
+  }
+
+  function handleLevelChange(value: string | null) {
+    if (value === "All" || value === null) {
+      setParams({ level: null });
+    } else {
+      setParams({ level: value as LevelFilter });
+    }
+  }
+
+  function handleSortChange(value: string | null) {
+    if (value === null) {
+      setParams({ sort: null });
+    } else {
+      setParams({ sort: value as SortKey });
+    }
+  }
 
   function resetFilters() {
-    setQuery("");
-    setLevel("All");
-    setSort("newest");
+    setParams({ q: null, level: null, sort: null });
   }
 
   function handleViewChange(value: string[]) {
     const next = value[0];
-    if (next === "grid" || next === "list") setView(next);
+    if (next === "grid" || next === "list") setView(next as ViewMode);
   }
 
   function renderClearFiltersAction() {
@@ -174,16 +185,16 @@ export function CoursesExplorer({ courses }: CoursesExplorerProps) {
         <div className="relative flex-1 lg:max-w-md">
           <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={q}
+            onChange={(e) => handleQueryChange(e.target.value)}
             placeholder="Search courses by title or description..."
             className="pl-9"
             aria-label="Search courses"
           />
-          {query && (
+          {q && (
             <button
               type="button"
-              onClick={() => setQuery("")}
+              onClick={() => handleQueryChange("")}
               aria-label="Clear search"
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
@@ -205,31 +216,32 @@ export function CoursesExplorer({ courses }: CoursesExplorerProps) {
 
           <Select
             value={level}
-            onValueChange={(value) => setLevel(value as LevelFilter)}
+            onValueChange={handleLevelChange}
           >
             <SelectTrigger className="w-40" aria-label="Filter by level">
-              <SelectValue />
+              <SelectValue>
+                {(value) => findLabel(LEVEL_OPTIONS, value)}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {LEVELS.map((l) => (
-                <SelectItem key={l.value} value={l.value}>
-                  {l.label}
+              {LEVEL_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <Select
-            value={sort}
-            onValueChange={(value) => setSort(value as SortKey)}
-          >
+          <Select value={sort} onValueChange={handleSortChange}>
             <SelectTrigger className="w-56" aria-label="Sort courses">
-              <SelectValue />
+              <SelectValue>
+                {(value) => findLabel(SORT_OPTIONS, value)}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {SORTS.map((s) => (
-                <SelectItem key={s.value} value={s.value}>
-                  {s.label}
+              {SORT_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>

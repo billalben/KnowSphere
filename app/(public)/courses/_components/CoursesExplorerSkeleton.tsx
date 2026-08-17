@@ -8,7 +8,7 @@ export function CoursesExplorerSkeleton() {
         <div className="flex flex-wrap items-center gap-3">
           <Skeleton className="h-9 w-40" />
           <Skeleton className="h-9 w-56" />
-          <Skeleton className="h-9 w-[72px]" />
+          <Skeleton className="h-9 w-18" />
         </div>
       </div>
 

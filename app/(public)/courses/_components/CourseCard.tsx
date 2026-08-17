@@ -39,7 +39,8 @@ export function CourseCard({ course, className }: CourseCardProps) {
   const [imageError, setImageError] = useState(false);
 
   const imageUrl = useConstructUrl(course.fileKey);
-  const src = imageError || !course.fileKey ? "/course-placeholder.png" : imageUrl;
+  const src =
+    imageError || !course.fileKey ? "/course-placeholder.png" : imageUrl;
 
   const levelLabel =
     course.level.charAt(0) + course.level.slice(1).toLowerCase();
@@ -61,12 +62,13 @@ export function CourseCard({ course, className }: CourseCardProps) {
           className="object-cover transition-transform duration-500 group-hover:scale-105"
           onError={() => setImageError(true)}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
         <Badge
           className={cn(
             "absolute top-3 left-3 backdrop-blur-sm",
-            levelStyles[course.level] ?? "bg-secondary text-secondary-foreground",
+            levelStyles[course.level] ??
+              "bg-secondary text-secondary-foreground",
           )}
         >
           <GraduationCapIcon className="size-3" />
