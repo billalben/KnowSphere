@@ -25,6 +25,7 @@ model User {
   accounts      Account[]
 
   courses Course[]
+  contactMessages ContactMessage[]
 
   role       String?
   banned     Boolean?  @default(false)
@@ -154,4 +155,21 @@ model Lesson {
 
   chapter CourseChapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
   chapterId String
+}
+
+model ContactMessage {
+  id String @id @default(cuid())
+
+  name    String
+  email   String
+  message String
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@map("contact_message")
 }

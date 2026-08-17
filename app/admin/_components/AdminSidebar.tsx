@@ -10,6 +10,7 @@ import {
   LayoutDashboardIcon,
   BookCheckIcon,
   FolderIcon,
+  MessageCircleIcon,
   MessageCircleQuestionMarkIcon,
 } from "lucide-react";
 
@@ -50,6 +51,11 @@ export function AdminSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       title: "Projects",
       url: "/admin/projects",
       icon: <FolderIcon size={16} />,
+    },
+    {
+      title: "Messages",
+      url: "/admin/contact-messages",
+      icon: <MessageCircleIcon size={16} />,
     },
   ];
 
