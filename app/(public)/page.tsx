@@ -1,9 +1,7 @@
-"use client";
-
-import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import Link from "next/link";
+
+import { Hero } from "./_components/Hero";
+import { getOptionalSession } from "./_lib/get-optional-session";
 
 interface IFeatureProps {
   title: string;
@@ -50,28 +48,13 @@ const features: IFeatureProps[] = [
   },
 ];
 
-export default function Page() {
+export default async function Page() {
+  const session = await getOptionalSession();
+  const isAuthenticated = Boolean(session?.user);
+
   return (
     <>
-      <section className="relative pb-20 pt-24">
-        <div className="flex flex-col items-center text-center space-y-8">
-          <Badge>The feature of online education</Badge>
-
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-            Elevate your learning journey with our cutting-edge online education
-            platform!
-          </h1>
-          <p className="max-w-2xl text-lg text-muted-foreground">
-            Discover new way to learn, connect, and grow with us.
-          </p>
-
-          <div className="flex flex-col md:flex-row gap-4">
-            <Link href="/courses" className={buttonVariants({ size: "lg" })}>
-              Explore Courses
-            </Link>
-          </div>
-        </div>
-      </section>
+      <Hero isAuthenticated={isAuthenticated} />
 
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 sm:gap-4 md:gap-6 xl:gap-8">
         {features.map((feature) => (
