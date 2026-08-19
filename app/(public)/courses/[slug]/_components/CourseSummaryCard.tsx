@@ -21,10 +21,14 @@ import {
   formatDuration,
   formatPrice,
 } from "../_lib/format-duration";
+import { EnrollmentButton } from "./EnrollmentButton";
 
 interface CourseSummaryCardProps {
   course: tCourseDetail;
   totalLessons: number;
+  slug: string;
+  isEnrolled: boolean;
+  isSignedIn: boolean;
 }
 
 interface StatItemProps {
@@ -70,6 +74,9 @@ const BENEFITS: BenefitItemProps[] = [
 export function CourseSummaryCard({
   course,
   totalLessons,
+  slug,
+  isEnrolled,
+  isSignedIn,
 }: CourseSummaryCardProps) {
   const levelLabel =
     course.level.charAt(0) + course.level.slice(1).toLowerCase();
@@ -96,9 +103,13 @@ export function CourseSummaryCard({
 
       <CardContent className="space-y-5">
         <div className="space-y-2">
-          <Button className="w-full" size="lg">
-            {isFree ? "Enroll for free" : "Enroll now"}
-          </Button>
+          <EnrollmentButton
+            courseId={course.id}
+            slug={slug}
+            isEnrolled={isEnrolled}
+            isSignedIn={isSignedIn}
+            price={course.price}
+          />
           <Button variant="outline" className="w-full" size="lg">
             <BookmarkIcon className="size-4" />
             Add to wishlist

@@ -1,6 +1,8 @@
 import { type Metadata } from "next";
 
 import { getCourseBySlug } from "@/app/data/course/get-course-by-slug";
+import { checkIfCourseBought } from "@/app/data/user/user-is-enrolled";
+import { getOptionalSession } from "@/app/(public)/_lib/get-optional-session";
 import { CoverImage } from "./_components/CoverImage";
 import { CourseCurriculum } from "./_components/CourseCurriculum";
 import { CourseHeader } from "./_components/CourseHeader";
@@ -27,6 +29,12 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
   const { slug } = await params;
   const course = await getCourseBySlug(slug);
 
+  const [session, isEnrolled] = await Promise.all([
+    getOptionalSession(),
+    checkIfCourseBought({ courseId: course.id }),
+  ]);
+  const isSignedIn = !!session?.user;
+
   const totalLessons = course.courseChapters.reduce(
     (acc, chapter) => acc + chapter.lessons.length,
     0,
@@ -48,7 +56,13 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
         </div>
 
         <aside className="lg:col-span-4 lg:sticky lg:top-24 lg:self-start">
-          <CourseSummaryCard course={course} totalLessons={totalLessons} />
+          <CourseSummaryCard
+            course={course}
+            totalLessons={totalLessons}
+            slug={slug}
+            isEnrolled={isEnrolled}
+            isSignedIn={isSignedIn}
+          />
         </aside>
       </div>
     </div>

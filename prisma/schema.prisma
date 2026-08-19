@@ -24,8 +24,11 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
-  courses Course[]
+  courses         Course[]
+  enrollment      Enrollment[]
   contactMessages ContactMessage[]
+
+  stripeCustomerId String? @unique
 
   role       String?
   banned     Boolean?  @default(false)
@@ -121,40 +124,43 @@ model Course {
   userId String
 
   courseChapters CourseChapter[]
+  enrollment     Enrollment[]
 }
 
 model CourseChapter {
   id String @id @default(cuid())
 
-  title String
+  title    String
   position Int
-  @@unique([courseId, position])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId String
 
   lessons Lesson[]
+
+  @@unique([courseId, position])
 }
 
 model Lesson {
   id String @id @default(cuid())
 
-  title String
-  description String?
+  title        String
+  description  String?
   thumbnailKey String?
-  videoKey String?
+  videoKey     String?
 
   position Int
-  @@unique([chapterId, position])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  chapter CourseChapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  chapter   CourseChapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
   chapterId String
+
+  @@unique([chapterId, position])
 }
 
 model ContactMessage {
@@ -172,4 +178,28 @@ model ContactMessage {
 
   @@index([createdAt])
   @@map("contact_message")
+}
+
+model Enrollment {
+  id String @id @default(cuid())
+
+  amount Int
+  status EnrollmentStatus @default(Pending)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@unique([userId, courseId])
+}
+
+enum EnrollmentStatus {
+  Pending
+  Active
+  Cancelled
 }
