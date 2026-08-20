@@ -30,6 +30,8 @@ import NavUser from "@/components/nav-user";
 
 function isNavItemActive(pathname: string, url: string) {
   if (url === "#") return false;
+  const segmentCount = url.split("/").filter(Boolean).length;
+  if (segmentCount <= 1) return pathname === url;
   return pathname === url || pathname.startsWith(url + "/");
 }
 
@@ -39,7 +41,7 @@ export function AdminSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const navMain = [
     {
       title: "Dashboard",
-      url: "/admin/dashboard",
+      url: "/admin",
       icon: <LayoutDashboardIcon size={16} />,
     },
     {
@@ -123,9 +125,10 @@ function NavMain({ items, pathname }: NavMainProps) {
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
-          <SidebarMenuItem className="flex items-center gap-2">
+          <SidebarMenuItem className="flex items-center gap-2 mb-2">
             <SidebarMenuButton
-              tooltip="Quick Create"
+              tooltip="Create a new course"
+              render={<Link href="/admin/courses/new" />}
               className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
             >
               <PlusCircleIcon />
