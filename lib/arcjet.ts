@@ -27,6 +27,14 @@ export default arcjet({
   // base rules applied to all handlers
   rules: [
     shield({ mode: "LIVE" }), // protect against common attacks
-    // detectBot({ mode: "LIVE", allow: ["CATEGORY:SEARCH_ENGINE"] }), // detect and block bots
+    detectBot({
+      mode: "LIVE",
+      allow: [
+        "CATEGORY:SEARCH_ENGINE",
+        "CATEGORY:MONITOR",
+        "CATEGORY:PREVIEW",
+        "STRIPE_WEBHOOK",
+      ],
+    }), // detect and block bots
   ],
 });

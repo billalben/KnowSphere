@@ -125,6 +125,8 @@ model Course {
 
   courseChapters CourseChapter[]
   enrollment     Enrollment[]
+
+  stripePriceId String @unique
 }
 
 model CourseChapter {
