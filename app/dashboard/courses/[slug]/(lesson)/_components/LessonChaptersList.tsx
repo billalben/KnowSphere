@@ -30,8 +30,6 @@ import type {
   tCourseForLearningLesson,
 } from "@/app/data/user/get-course-for-learning";
 
-const FAKE_PROGRESS = 35;
-
 interface LessonChaptersListProps {
   chapters: tCourseForLearningChapter[];
   courseSlug: string;
@@ -47,17 +45,27 @@ export function LessonChaptersList({
     () => chapters.reduce((acc, ch) => acc + ch.lessons.length, 0),
     [chapters],
   );
+  const completedCount = useMemo(
+    () =>
+      chapters.reduce(
+        (acc, ch) =>
+          acc + ch.lessons.filter((lesson) => lesson.completed).length,
+        0,
+      ),
+    [chapters],
+  );
+  const progressValue =
+    totalLessons === 0 ? 0 : Math.round((completedCount / totalLessons) * 100);
 
   return (
     <Card className="overflow-hidden p-0">
       <div className="border-b p-4">
-        <Progress value={FAKE_PROGRESS} className="w-full max-w-sm">
-          <ProgressLabel>Upload progress</ProgressLabel>
+        <Progress value={progressValue} className="w-full max-w-sm">
+          <ProgressLabel>Course progress</ProgressLabel>
           <ProgressValue />
         </Progress>
         <p className="mt-2 text-[11px] text-muted-foreground tabular-nums">
-          {Math.round((FAKE_PROGRESS / 100) * totalLessons)} of {totalLessons}{" "}
-          lessons
+          {completedCount} of {totalLessons} lessons
         </p>
       </div>
 
@@ -178,10 +186,12 @@ function LessonRow({ lesson, isActive, href }: LessonRowProps) {
           )}
         </span>
         <span className="flex-1 line-clamp-2 leading-snug">{lesson.title}</span>
-        <CheckCircle2Icon
-          className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/30"
-          aria-hidden
-        />
+        {lesson.completed ? (
+          <CheckCircle2Icon
+            className="mt-0.5 size-4 shrink-0 text-primary"
+            aria-hidden
+          />
+        ) : null}
       </Link>
     </li>
   );

@@ -14,11 +14,11 @@ export default async function CourseLearnOverviewPage({ params }: PageParams) {
   const { slug } = await params;
   const course = await getCourseForLearning({ slug });
 
-  const totalLessons = course.courseChapters.reduce(
-    (acc, chapter) => acc + chapter.lessons.length,
-    0,
-  );
-  const firstLessonId = course.courseChapters[0]?.lessons[0]?.id ?? null;
+  const lessons = course.courseChapters.flatMap((chapter) => chapter.lessons);
+  const totalLessons = lessons.length;
+  const completedCount = lessons.filter((lesson) => lesson.completed).length;
+  const resumeLessonId =
+    lessons.find((lesson) => !lesson.completed)?.id ?? lessons[0]?.id ?? null;
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4 pb-12">
@@ -27,7 +27,8 @@ export default async function CourseLearnOverviewPage({ params }: PageParams) {
         title={course.title}
         smallDesc={course.smallDesc}
         fileKey={course.fileKey}
-        firstLessonId={firstLessonId}
+        resumeLessonId={resumeLessonId}
+        hasStarted={completedCount > 0}
       />
 
       {totalLessons === 0 ? (

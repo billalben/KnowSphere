@@ -7,7 +7,13 @@ export function LessonContentSkeleton() {
 
       <div className="space-y-4">
         <Skeleton className="h-9 w-2/3" />
-        <Skeleton className="h-11 w-56" />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Skeleton className="h-11 w-56" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-11 w-28" />
+            <Skeleton className="h-11 w-20" />
+          </div>
+        </div>
       </div>
 
       <Skeleton className="h-px w-full" />

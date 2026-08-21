@@ -18,7 +18,7 @@ export async function LessonLayoutContent({
 
   return (
     <>
-      <PlayerHeader courseTitle={course.title} />
+      <PlayerHeader courseSlug={course.slug} courseTitle={course.title} />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         <div className="flex min-w-0 flex-col gap-4">{children}</div>

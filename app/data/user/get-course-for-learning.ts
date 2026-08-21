@@ -12,6 +12,7 @@ export type tCourseForLearningLesson = {
   videoKey: string | null;
   thumbnailKey: string | null;
   position: number;
+  completed: boolean;
 };
 
 export type tCourseForLearningChapter = {
@@ -62,6 +63,10 @@ export async function getCourseForLearning({
               videoKey: true,
               thumbnailKey: true,
               position: true,
+              lessonProgress: {
+                where: { userId: session.user.id },
+                select: { completed: true },
+              },
             },
           },
         },
@@ -87,5 +92,26 @@ export async function getCourseForLearning({
     redirect(`/courses/${slug}`);
   }
 
-  return course;
+  return {
+    id: course.id,
+    title: course.title,
+    slug: course.slug,
+    smallDesc: course.smallDesc,
+    fileKey: course.fileKey,
+    status: course.status,
+    courseChapters: course.courseChapters.map((chapter) => ({
+      id: chapter.id,
+      title: chapter.title,
+      position: chapter.position,
+      lessons: chapter.lessons.map((lesson) => ({
+        id: lesson.id,
+        title: lesson.title,
+        description: lesson.description,
+        videoKey: lesson.videoKey,
+        thumbnailKey: lesson.thumbnailKey,
+        position: lesson.position,
+        completed: lesson.lessonProgress[0]?.completed ?? false,
+      })),
+    })),
+  };
 }

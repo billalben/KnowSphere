@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   BookOpenIcon,
+  CheckCircle2Icon,
   ChevronDownIcon,
   PlayCircleIcon,
 } from "lucide-react";
@@ -137,10 +138,17 @@ function LessonRow({ lesson, index, href }: LessonRowProps) {
             Lesson {index + 1}
           </span>
         </div>
-        <PlayCircleIcon
-          className="mt-0.5 size-4 shrink-0 text-muted-foreground"
-          aria-hidden
-        />
+        {lesson.completed ? (
+          <CheckCircle2Icon
+            className="mt-0.5 size-4 shrink-0 text-primary"
+            aria-hidden
+          />
+        ) : (
+          <PlayCircleIcon
+            className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+            aria-hidden
+          />
+        )}
       </Link>
     </li>
   );

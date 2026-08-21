@@ -31,7 +31,10 @@ function thumbnailUrl(fileKey: string): string {
 }
 
 export function EnrolledCourseCard({ course }: EnrolledCourseCardProps) {
-  const continueHref = `/dashboard/courses/${course.slug}`;
+  const continueHref = course.resumeLessonId
+    ? `/dashboard/courses/${course.slug}/${course.resumeLessonId}`
+    : `/dashboard/courses/${course.slug}`;
+  const hasStarted = course.completedCount > 0;
 
   const lessonWord = course.lessonsCount === 1 ? "lesson" : "lessons";
   const chapterWord = course.chaptersCount === 1 ? "chapter" : "chapters";
@@ -63,7 +66,12 @@ export function EnrolledCourseCard({ course }: EnrolledCourseCardProps) {
           </div>
 
           <h3 className="line-clamp-2 text-lg font-semibold leading-tight tracking-tight">
-            {course.title}
+            <Link
+              href={`/dashboard/courses/${course.slug}`}
+              className="transition-colors hover:text-primary hover:underline underline-offset-4"
+            >
+              {course.title}
+            </Link>
           </h3>
           <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
             {course.smallDesc}
@@ -72,13 +80,13 @@ export function EnrolledCourseCard({ course }: EnrolledCourseCardProps) {
 
         <div className="mt-auto flex items-center justify-between border-t pt-4">
           <span className="text-xs text-muted-foreground tabular-nums">
-            {course.lessonsCount} {lessonWord}
+            {course.completedCount} of {course.lessonsCount} {lessonWord}
           </span>
           <Link
             href={continueHref}
             className={buttonVariants({ size: "sm" })}
           >
-            Continue
+            {hasStarted ? "Continue" : "Start course"}
             <ArrowRightIcon className="size-4" />
           </Link>
         </div>

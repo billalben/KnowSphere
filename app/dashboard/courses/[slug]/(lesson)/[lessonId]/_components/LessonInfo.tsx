@@ -2,12 +2,17 @@ import { RenderDescription } from "@/components/rich-text-editor/RenderDescripti
 import { Separator } from "@/components/ui/separator";
 import { type JSONContent } from "@tiptap/react";
 
+import { LessonNav } from "./LessonNav";
 import { MarkCompleteButton } from "./MarkCompleteButton";
 
 interface LessonInfoProps {
   lessonId: string;
   title: string;
   description: string | null;
+  completed: boolean;
+  courseSlug: string;
+  prevLessonId: string | null;
+  nextLessonId: string | null;
 }
 
 function parseDescription(description: string | null): JSONContent | null {
@@ -25,6 +30,10 @@ export function LessonInfo({
   lessonId,
   title,
   description,
+  completed,
+  courseSlug,
+  prevLessonId,
+  nextLessonId,
 }: LessonInfoProps) {
   const parsed = parseDescription(description);
 
@@ -34,7 +43,14 @@ export function LessonInfo({
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight leading-tight">
           {title}
         </h1>
-        <MarkCompleteButton lessonId={lessonId} />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <MarkCompleteButton lessonId={lessonId} completed={completed} />
+          <LessonNav
+            courseSlug={courseSlug}
+            prevLessonId={prevLessonId}
+            nextLessonId={nextLessonId}
+          />
+        </div>
       </div>
 
       <Separator />

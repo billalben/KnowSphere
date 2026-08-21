@@ -14,15 +14,19 @@ export default async function LessonPlayerPage({ params }: PageParams) {
   const course = await getCourseForLearning({ slug });
 
   const lessons = course.courseChapters.flatMap((chapter) => chapter.lessons);
-  const currentLesson = lessons.find((lesson) => lesson.id === lessonId);
+  const currentIndex = lessons.findIndex((lesson) => lesson.id === lessonId);
 
-  if (!currentLesson) {
+  if (currentIndex === -1) {
     const fallback = lessons[0];
     if (!fallback) {
       notFound();
     }
     redirect(`/dashboard/courses/${slug}/${fallback.id}`);
   }
+
+  const currentLesson = lessons[currentIndex];
+  const prevLessonId = lessons[currentIndex - 1]?.id ?? null;
+  const nextLessonId = lessons[currentIndex + 1]?.id ?? null;
 
   return (
     <div className="space-y-4">
@@ -35,6 +39,10 @@ export default async function LessonPlayerPage({ params }: PageParams) {
         lessonId={currentLesson.id}
         title={currentLesson.title}
         description={currentLesson.description}
+        completed={currentLesson.completed}
+        courseSlug={slug}
+        prevLessonId={prevLessonId}
+        nextLessonId={nextLessonId}
       />
     </div>
   );

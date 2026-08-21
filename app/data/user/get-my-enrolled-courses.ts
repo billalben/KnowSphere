@@ -14,7 +14,8 @@ export type tEnrolledCourse = {
   duration: number;
   chaptersCount: number;
   lessonsCount: number;
-  firstLessonId: string | null;
+  completedCount: number;
+  resumeLessonId: string | null;
 };
 
 export async function getMyEnrolledCourses(): Promise<tEnrolledCourse[]> {
@@ -42,7 +43,13 @@ export async function getMyEnrolledCourses(): Promise<tEnrolledCourse[]> {
             select: {
               lessons: {
                 orderBy: { position: "asc" },
-                select: { id: true },
+                select: {
+                  id: true,
+                  lessonProgress: {
+                    where: { userId: session.user.id },
+                    select: { completed: true },
+                  },
+                },
               },
             },
           },
@@ -53,11 +60,16 @@ export async function getMyEnrolledCourses(): Promise<tEnrolledCourse[]> {
 
   return enrollments.map((enrollment) => {
     const chapters = enrollment.course.courseChapters;
-    const lessonsCount = chapters.reduce(
-      (acc, chapter) => acc + chapter.lessons.length,
-      0,
+    const lessons = chapters.flatMap((chapter) =>
+      chapter.lessons.map((lesson) => ({
+        id: lesson.id,
+        completed: lesson.lessonProgress[0]?.completed ?? false,
+      })),
     );
-    const firstLessonId = chapters[0]?.lessons[0]?.id ?? null;
+    const lessonsCount = lessons.length;
+    const completedCount = lessons.filter((lesson) => lesson.completed).length;
+    const resumeLessonId =
+      lessons.find((lesson) => !lesson.completed)?.id ?? lessons[0]?.id ?? null;
 
     return {
       enrollmentId: enrollment.id,
@@ -70,7 +82,8 @@ export async function getMyEnrolledCourses(): Promise<tEnrolledCourse[]> {
       duration: enrollment.course.duration,
       chaptersCount: chapters.length,
       lessonsCount,
-      firstLessonId,
+      completedCount,
+      resumeLessonId,
     };
   });
 }

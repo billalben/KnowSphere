@@ -10,7 +10,8 @@ interface CourseOverviewHeaderProps {
   title: string;
   smallDesc: string;
   fileKey: string;
-  firstLessonId: string | null;
+  resumeLessonId: string | null;
+  hasStarted: boolean;
 }
 
 function thumbnailUrl(fileKey: string): string {
@@ -23,7 +24,8 @@ export function CourseOverviewHeader({
   title,
   smallDesc,
   fileKey,
-  firstLessonId,
+  resumeLessonId,
+  hasStarted,
 }: CourseOverviewHeaderProps) {
   return (
     <div className="space-y-6">
@@ -56,14 +58,16 @@ export function CourseOverviewHeader({
         </p>
       </div>
 
-      {firstLessonId ? (
+      {resumeLessonId ? (
         <Button
           size="lg"
           nativeButton={false}
-          render={<Link href={`/dashboard/courses/${slug}/${firstLessonId}`} />}
+          render={
+            <Link href={`/dashboard/courses/${slug}/${resumeLessonId}`} />
+          }
         >
           <PlayCircleIcon className="size-4" />
-          Start watching course
+          {hasStarted ? "Continue watching" : "Start watching course"}
         </Button>
       ) : null}
     </div>
