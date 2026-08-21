@@ -1,0 +1,36 @@
+import type { ReactNode } from "react";
+
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+
+import { DashboardHeader } from "./_components/DashboardHeader";
+import { DashboardSidebar } from "./_components/DashboardSidebar";
+
+interface DashboardLayoutProps {
+  children: ReactNode;
+}
+
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  return (
+    <SidebarProvider
+      className="h-svh"
+      style={
+        {
+          "--sidebar-width": "calc(var(--spacing) * 52)",
+          "--header-height": "calc(var(--spacing) * 12)",
+        } as React.CSSProperties
+      }
+    >
+      {/* Sidebar */}
+      <DashboardSidebar variant="inset" />
+
+      <SidebarInset>
+        {/* Header */}
+        <DashboardHeader />
+
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 md:space-y-6 lg:py-6">
+          {children}
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  );
+}

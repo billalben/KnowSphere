@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { CheckIcon, Loader2Icon } from "lucide-react";
+import { Loader2Icon, PlayCircleIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -48,11 +48,10 @@ export function EnrollmentButton({
       <Button
         className="w-full"
         size="lg"
-        variant="secondary"
-        render={<Link href={`/courses/${slug}`} />}
+        render={<Link href={`/dashboard/courses/${slug}`} />}
       >
-        <CheckIcon className="size-4" />
-        Already enrolled
+        <PlayCircleIcon className="size-4" />
+        Start watching course
       </Button>
     );
   }
