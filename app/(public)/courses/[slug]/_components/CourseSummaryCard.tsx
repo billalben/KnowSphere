@@ -1,11 +1,9 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { RatingBadge } from "@/components/general/RatingBadge";
 import { type tCourseDetail } from "@/app/data/course/get-course-by-slug";
 import {
   AwardIcon,
-  BookmarkIcon,
   BookOpenIcon,
   ClockIcon,
   GraduationCapIcon,
@@ -23,6 +21,7 @@ import {
   formatPrice,
 } from "../_lib/format-duration";
 import { EnrollmentButton } from "./EnrollmentButton";
+import { WishlistButton } from "./WishlistButton";
 
 interface CourseSummaryCardProps {
   course: tCourseDetail;
@@ -32,6 +31,7 @@ interface CourseSummaryCardProps {
   isSignedIn: boolean;
   ratingAvg: number;
   ratingCount: number;
+  isWishlisted: boolean;
 }
 
 interface StatItemProps {
@@ -82,6 +82,7 @@ export function CourseSummaryCard({
   isSignedIn,
   ratingAvg,
   ratingCount,
+  isWishlisted,
 }: CourseSummaryCardProps) {
   const levelLabel =
     course.level.charAt(0) + course.level.slice(1).toLowerCase();
@@ -124,10 +125,13 @@ export function CourseSummaryCard({
             isSignedIn={isSignedIn}
             price={course.price}
           />
-          <Button variant="outline" className="w-full" size="lg">
-            <BookmarkIcon className="size-4" />
-            Add to wishlist
-          </Button>
+          <WishlistButton
+            courseId={course.id}
+            slug={slug}
+            isWishlisted={isWishlisted}
+            isSignedIn={isSignedIn}
+            isEnrolled={isEnrolled}
+          />
         </div>
 
         <Separator />

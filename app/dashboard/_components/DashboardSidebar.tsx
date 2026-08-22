@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ComponentProps, type ReactNode } from "react";
 import {
+  BookmarkIcon,
   GraduationCapIcon,
   LayersIcon,
   MessageCircleQuestionMarkIcon,
@@ -45,6 +46,11 @@ export function DashboardSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       title: "Dashboard",
       url: "/dashboard",
       icon: <GraduationCapIcon size={16} />,
+    },
+    {
+      title: "Wishlist",
+      url: "/dashboard/wishlist",
+      icon: <BookmarkIcon size={16} />,
     },
     {
       title: "Profile",

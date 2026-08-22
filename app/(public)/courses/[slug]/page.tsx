@@ -2,6 +2,7 @@ import { type Metadata } from "next";
 
 import { getCourseBySlug } from "@/app/data/course/get-course-by-slug";
 import { getCourseRatingAggregate } from "@/app/data/course/get-course-reviews";
+import { isCourseWishlisted } from "@/app/data/course/get-wishlist-state";
 import { checkIfCourseBought } from "@/app/data/user/user-is-enrolled";
 import { getOptionalSession } from "@/app/(public)/_lib/get-optional-session";
 import { CoverImage } from "./_components/CoverImage";
@@ -31,23 +32,26 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
   const { slug } = await params;
   const course = await getCourseBySlug(slug);
 
-  const [session, isEnrolled, aggregate] = await Promise.all([
-    getOptionalSession(),
+  const session = await getOptionalSession();
+  const currentUserId = session?.user?.id ?? null;
+  const isSignedIn = !!session?.user;
+
+  const [isEnrolled, aggregate, isWishlisted] = await Promise.all([
     checkIfCourseBought({ courseId: course.id }),
     getCourseRatingAggregate({ courseId: course.id }),
+    currentUserId
+      ? isCourseWishlisted({ courseId: course.id, userId: currentUserId })
+      : Promise.resolve(false),
   ]);
-  const isSignedIn = !!session?.user;
 
   const totalLessons = course.courseChapters.reduce(
     (acc, chapter) => acc + chapter.lessons.length,
     0,
   );
 
-  const currentUserId = session?.user?.id ?? null;
-  const myReview =
-    currentUserId
-      ? course.courseReviews.find((r) => r.author.id === currentUserId) ?? null
-      : null;
+  const myReview = currentUserId
+    ? course.courseReviews.find((r) => r.author.id === currentUserId) ?? null
+    : null;
 
   return (
     <div className="pt-24 lg:pt-32 pb-12 lg:pb-16">
@@ -84,6 +88,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
             isSignedIn={isSignedIn}
             ratingAvg={aggregate.avg}
             ratingCount={aggregate.count}
+            isWishlisted={isWishlisted}
           />
         </aside>
       </div>

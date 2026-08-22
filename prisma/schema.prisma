@@ -31,6 +31,7 @@ model User {
   lessonComments  LessonComment[]
   commentLikes    LessonCommentLike[]
   courseReviews   CourseReview[]
+  wishlistItems   WishlistItem[]
 
   stripeCustomerId String? @unique
 
@@ -130,6 +131,7 @@ model Course {
   courseChapters CourseChapter[]
   enrollment     Enrollment[]
   courseReviews  CourseReview[]
+  wishlistItems  WishlistItem[]
 
   stripePriceId String @unique
 }
@@ -328,4 +330,20 @@ model CourseReview {
   @@index([courseId, createdAt])
   @@index([userId])
   @@map("course_review")
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([userId, createdAt])
+  @@index([courseId])
+  @@map("wishlist_item")
 }
