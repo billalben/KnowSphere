@@ -6,6 +6,12 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -141,14 +147,14 @@ export function CommentsSection({
   }
 
   return (
-    <section className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">
+    <Card>
+      <CardHeader>
+        <CardTitle>
           Comments{" "}
-          <span className="text-sm font-normal text-muted-foreground">
+          <span className="text-muted-foreground text-sm font-normal">
             ({total})
           </span>
-        </h2>
+        </CardTitle>
 
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -173,43 +179,45 @@ export function CommentsSection({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
+      </CardHeader>
 
-      <CommentForm onSubmit={submitComment} />
+      <CardContent className="flex flex-col gap-4">
+        <CommentForm onSubmit={submitComment} />
 
-      {comments.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">
-          No comments yet. Be the first to share your thoughts.
-        </p>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {comments.map((comment) => (
-            <CommentItem
-              key={`${comment.id}-${sort}`}
-              comment={comment}
-              currentUserId={currentUserId}
-              currentUserRole={currentUserRole}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
-      )}
+        {comments.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            No comments yet. Be the first to share your thoughts.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {comments.map((comment) => (
+              <CommentItem
+                key={`${comment.id}-${sort}`}
+                comment={comment}
+                currentUserId={currentUserId}
+                currentUserRole={currentUserRole}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+        )}
 
-      {hasMore ? (
-        <div className="flex justify-center">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={loadMore}
-            disabled={loadingMore}
-          >
-            {loadingMore ? (
-              <Loader2Icon className="size-4 animate-spin" />
-            ) : null}
-            Load more
-          </Button>
-        </div>
-      ) : null}
-    </section>
+        {hasMore ? (
+          <div className="flex justify-center">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={loadMore}
+              disabled={loadingMore}
+            >
+              {loadingMore ? (
+                <Loader2Icon className="size-4 animate-spin" />
+              ) : null}
+              Load more
+            </Button>
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }

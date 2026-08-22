@@ -55,6 +55,61 @@ export const lessonSchema = z.object({
   thumbnailKey: z.string().optional().nullable(),
 });
 
+export enum EQuizQuestionType {
+  SINGLE = "SINGLE",
+  MULTIPLE = "MULTIPLE",
+}
+
+export const quizQuestionTypeSchema = z.enum([
+  EQuizQuestionType.SINGLE,
+  EQuizQuestionType.MULTIPLE,
+]);
+
+export const quizAnswerInputSchema = z.object({
+  id: z.string().optional(),
+  text: z
+    .string()
+    .min(1, "Answer text is required")
+    .max(500, "Answer text must be at most 500 characters long"),
+  isCorrect: z.boolean(),
+  explanation: z
+    .string()
+    .max(1000, "Explanation must be at most 1000 characters long")
+    .optional(),
+});
+
+export const quizQuestionInputSchema = z.object({
+  id: z.string().optional(),
+  text: z
+    .string()
+    .min(3, "Question text must be at least 3 characters long")
+    .max(1000, "Question text must be at most 1000 characters long"),
+  type: quizQuestionTypeSchema,
+  answers: z
+    .array(quizAnswerInputSchema)
+    .min(2, "At least 2 answers required")
+    .superRefine((arr, ctx) => {
+      const correctCount = arr.filter((a) => a.isCorrect).length;
+      if (correctCount === 0) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Mark at least one correct answer",
+        });
+      }
+    }),
+});
+
+export const lessonQuizSchema = z.object({
+  lessonId: z.cuid({ message: "Invalid lesson ID" }),
+  questions: z
+    .array(quizQuestionInputSchema)
+    .min(1, "At least one question is required"),
+});
+
 export type CourseSchemaType = z.infer<typeof courseSchema>;
 export type ChapterSchemaType = z.infer<typeof chapterSchema>;
 export type LessonSchemaType = z.infer<typeof lessonSchema>;
+export type QuizQuestionTypeSchemaType = z.infer<typeof quizQuestionTypeSchema>;
+export type QuizAnswerInputSchemaType = z.infer<typeof quizAnswerInputSchema>;
+export type QuizQuestionInputSchemaType = z.infer<typeof quizQuestionInputSchema>;
+export type LessonQuizSchemaType = z.infer<typeof lessonQuizSchema>;

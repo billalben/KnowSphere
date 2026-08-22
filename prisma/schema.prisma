@@ -167,8 +167,43 @@ model Lesson {
 
   lessonProgress LessonProgress[]
   comments       LessonComment[]
+  quiz           Quiz?
 
   @@unique([chapterId, position])
+}
+
+model Quiz {
+  id        String         @id @default(cuid())
+  lessonId  String         @unique
+  lesson    Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  questions QuizQuestion[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model QuizQuestion {
+  id       String           @id @default(cuid())
+  quizId   String
+  quiz     Quiz             @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  text     String
+  type     QuizQuestionType
+  position Int
+  answers  QuizAnswer[]
+
+  @@unique([quizId, position])
+  @@index([quizId])
+}
+
+model QuizAnswer {
+  id          String       @id @default(cuid())
+  questionId  String
+  question    QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text        String
+  isCorrect   Boolean      @default(false)
+  explanation String?
+  position    Int
+
+  @@index([questionId])
 }
 
 model ContactMessage {
@@ -210,6 +245,11 @@ enum EnrollmentStatus {
   Pending
   Active
   Cancelled
+}
+
+enum QuizQuestionType {
+  SINGLE
+  MULTIPLE
 }
 
 model LessonProgress {
