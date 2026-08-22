@@ -1,4 +1,5 @@
 import { RenderDescription } from "@/components/rich-text-editor/RenderDescription";
+import { ExpandableContent } from "@/components/ui/expandable-content";
 import { type JSONContent } from "@tiptap/react";
 
 interface DescriptionSectionProps {
@@ -25,7 +26,9 @@ export function DescriptionSection({ description }: DescriptionSectionProps) {
       <h2 className="text-xl md:text-2xl font-semibold tracking-tight">
         Description
       </h2>
-      <RenderDescription json={parsed} />
+      <ExpandableContent>
+        <RenderDescription json={parsed} />
+      </ExpandableContent>
     </section>
   );
 }

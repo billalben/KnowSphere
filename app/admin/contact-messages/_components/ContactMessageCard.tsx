@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ExpandableContent } from "@/components/ui/expandable-content";
 import { type tContactMessage } from "@/app/data/admin/admin-get-contact-messages";
 import { MailIcon, Trash2Icon, UserIcon } from "lucide-react";
 import Link from "next/link";
@@ -44,9 +45,15 @@ export function ContactMessageCard({ message }: ContactMessageCardProps) {
           </Badge>
         </div>
 
-        <p className="line-clamp-4 flex-1 text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
-          {message.message}
-        </p>
+        <ExpandableContent
+          collapsedHeight={96}
+          labels={{ showMore: "Read more" }}
+          className="flex-1"
+        >
+          <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
+            {message.message}
+          </p>
+        </ExpandableContent>
 
         <div className="flex items-center justify-between gap-2 border-t border-border pt-3 text-xs">
           <span className="text-muted-foreground">

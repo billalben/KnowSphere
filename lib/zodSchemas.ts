@@ -19,7 +19,7 @@ export const courseSchema = z.object({
     .max(32, "Title must be at most 32 characters long"),
   description: z
     .string()
-    .max(500, "Description must be at most 500 characters long")
+    .max(2000, "Description must be at most 2000 characters long")
     .optional(),
   smallDesc: z
     .string()
@@ -111,5 +111,7 @@ export type ChapterSchemaType = z.infer<typeof chapterSchema>;
 export type LessonSchemaType = z.infer<typeof lessonSchema>;
 export type QuizQuestionTypeSchemaType = z.infer<typeof quizQuestionTypeSchema>;
 export type QuizAnswerInputSchemaType = z.infer<typeof quizAnswerInputSchema>;
-export type QuizQuestionInputSchemaType = z.infer<typeof quizQuestionInputSchema>;
+export type QuizQuestionInputSchemaType = z.infer<
+  typeof quizQuestionInputSchema
+>;
 export type LessonQuizSchemaType = z.infer<typeof lessonQuizSchema>;

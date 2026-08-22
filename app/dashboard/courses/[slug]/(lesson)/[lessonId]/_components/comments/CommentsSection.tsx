@@ -5,12 +5,7 @@ import { ArrowUpDownIcon, CheckIcon, Loader2Icon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -148,7 +143,7 @@ export function CommentsSection({
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex items-center justify-between">
         <CardTitle>
           Comments{" "}
           <span className="text-muted-foreground text-sm font-normal">

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { DragDropProvider } from "@dnd-kit/react";
 import { isSortable, useSortable } from "@dnd-kit/react/sortable";
 import {
@@ -182,7 +181,6 @@ function SortableChapter({
 export function EditCourseStructureForm({
   course,
 }: EditCourseStructureFormProps) {
-  const router = useRouter();
   const chaptersFromCourse = useMemo<Chapter[]>(
     () =>
       course.courseChapters?.map((chapter) => ({
@@ -234,8 +232,6 @@ export function EditCourseStructureForm({
         toast.error((result as tApiResponse<unknown>).message);
         return;
       }
-
-      router.refresh();
     });
   };
 
@@ -270,8 +266,6 @@ export function EditCourseStructureForm({
         toast.error((result as tApiResponse<unknown>).message);
         return;
       }
-
-      router.refresh();
     });
   };
 

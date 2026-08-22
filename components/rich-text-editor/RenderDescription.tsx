@@ -24,7 +24,7 @@ export function RenderDescription({ json }: iRenderDescriptionProps) {
   }, [json]);
 
   return (
-    <div className="prose dark:prose-invert prose-li:marker:text-primary">
+    <div className="prose dark:prose-invert prose-li:marker:text-primary max-w-none">
       {parse(output)}
     </div>
   );

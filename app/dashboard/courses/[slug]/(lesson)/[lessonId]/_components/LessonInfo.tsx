@@ -1,4 +1,5 @@
 import { RenderDescription } from "@/components/rich-text-editor/RenderDescription";
+import { ExpandableContent } from "@/components/ui/expandable-content";
 import { Separator } from "@/components/ui/separator";
 import { type JSONContent } from "@tiptap/react";
 
@@ -43,7 +44,8 @@ export function LessonInfo({
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight leading-tight">
           {title}
         </h1>
-        <div className="flex flex-wrap items-center justify-between gap-3">
+
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <MarkCompleteButton lessonId={lessonId} completed={completed} />
           <LessonNav
             courseSlug={courseSlug}
@@ -56,11 +58,13 @@ export function LessonInfo({
       <Separator />
 
       {parsed ? (
-        <section className="space-y-3">
+        <section className="space-y-4">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             About this lesson
           </h2>
-          <RenderDescription json={parsed} />
+          <ExpandableContent>
+            <RenderDescription json={parsed} />
+          </ExpandableContent>
         </section>
       ) : (
         <p className="text-sm text-muted-foreground">
