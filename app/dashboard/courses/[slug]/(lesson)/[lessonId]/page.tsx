@@ -1,9 +1,13 @@
 import { notFound, redirect } from "next/navigation";
 
 import { getCourseForLearning } from "@/app/data/user/get-course-for-learning";
+import { getLessonComments } from "@/app/data/user/get-lesson-comments";
+import { requireUser } from "@/app/data/user/require-user";
+import { COMMENT_PAGE_SIZE } from "@/lib/constants/comments";
 
 import { LessonInfo } from "./_components/LessonInfo";
 import { LessonVideo } from "./_components/LessonVideo";
+import { CommentsSection } from "./_components/comments/CommentsSection";
 
 interface PageParams {
   params: Promise<{ slug: string; lessonId: string }>;
@@ -28,6 +32,15 @@ export default async function LessonPlayerPage({ params }: PageParams) {
   const prevLessonId = lessons[currentIndex - 1]?.id ?? null;
   const nextLessonId = lessons[currentIndex + 1]?.id ?? null;
 
+  const session = await requireUser();
+  const initialComments = await getLessonComments({
+    lessonId: currentLesson.id,
+    viewerId: session.user.id,
+    page: 1,
+    pageSize: COMMENT_PAGE_SIZE,
+    sort: "oldest",
+  });
+
   return (
     <div className="space-y-4">
       <LessonVideo
@@ -43,6 +56,13 @@ export default async function LessonPlayerPage({ params }: PageParams) {
         courseSlug={slug}
         prevLessonId={prevLessonId}
         nextLessonId={nextLessonId}
+      />
+
+      <CommentsSection
+        lessonId={currentLesson.id}
+        initialPage={initialComments}
+        currentUserId={session.user.id}
+        currentUserRole={session.user.role ?? null}
       />
     </div>
   );

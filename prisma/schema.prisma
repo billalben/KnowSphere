@@ -28,6 +28,8 @@ model User {
   enrollment      Enrollment[]
   lessonProgress  LessonProgress[]
   contactMessages ContactMessage[]
+  lessonComments  LessonComment[]
+  commentLikes    LessonCommentLike[]
 
   stripeCustomerId String? @unique
 
@@ -164,6 +166,7 @@ model Lesson {
   chapterId String
 
   lessonProgress LessonProgress[]
+  comments       LessonComment[]
 
   @@unique([chapterId, position])
 }
@@ -224,4 +227,43 @@ model LessonProgress {
   lessonId String
 
   @@unique([userId, lessonId])
+}
+
+model LessonComment {
+  id        String   @id @default(cuid())
+  content   String
+  isEdited  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  parentId String?
+  parent   LessonComment?  @relation("LessonCommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  LessonComment[] @relation("LessonCommentReplies")
+
+  likes LessonCommentLike[]
+
+  @@index([lessonId, parentId, createdAt])
+  @@index([userId])
+  @@map("lesson_comment")
+}
+
+model LessonCommentLike {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  commentId String
+  comment   LessonComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, commentId])
+  @@index([commentId])
+  @@map("lesson_comment_like")
 }

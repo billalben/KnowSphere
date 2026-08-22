@@ -88,7 +88,10 @@ export async function getCourseForLearning({
     select: { status: true },
   });
 
-  if (!enrollment || enrollment.status !== "Active") {
+  if (
+    (!enrollment || enrollment.status !== "Active") &&
+    session.user.role !== "admin"
+  ) {
     redirect(`/courses/${slug}`);
   }
 
