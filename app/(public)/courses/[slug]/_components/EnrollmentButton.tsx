@@ -36,6 +36,7 @@ export function EnrollmentButton({
       <Button
         className="w-full"
         size="lg"
+        nativeButton={false}
         render={<Link href={`/login?redirect=/courses/${slug}`} />}
       >
         Sign in to enroll
@@ -48,6 +49,7 @@ export function EnrollmentButton({
       <Button
         className="w-full"
         size="lg"
+        nativeButton={false}
         render={<Link href={`/dashboard/courses/${slug}`} />}
       >
         <PlayCircleIcon className="size-4" />
