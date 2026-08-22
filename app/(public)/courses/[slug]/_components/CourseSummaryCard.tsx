@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { RatingBadge } from "@/components/general/RatingBadge";
@@ -6,6 +8,7 @@ import {
   AwardIcon,
   BookOpenIcon,
   ClockIcon,
+  ExternalLinkIcon,
   GraduationCapIcon,
   InfinityIcon,
   MonitorIcon,
@@ -32,6 +35,7 @@ interface CourseSummaryCardProps {
   ratingAvg: number;
   ratingCount: number;
   isWishlisted: boolean;
+  myCertificateVerificationCode: string | null;
 }
 
 interface StatItemProps {
@@ -83,6 +87,7 @@ export function CourseSummaryCard({
   ratingAvg,
   ratingCount,
   isWishlisted,
+  myCertificateVerificationCode,
 }: CourseSummaryCardProps) {
   const levelLabel =
     course.level.charAt(0) + course.level.slice(1).toLowerCase();
@@ -91,29 +96,44 @@ export function CourseSummaryCard({
 
   return (
     <Card className="overflow-hidden shadow-sm lg:shadow-md">
-      <CardHeader className="space-y-2">
-        <div className="flex items-baseline gap-2">
-          <CardTitle className="text-3xl font-bold tracking-tight">
-            {formatPrice(course.price)}
-          </CardTitle>
-          {!isFree && (
-            <span className="text-sm text-muted-foreground line-through">
-              ${(course.price * 1.5).toFixed(2)}
+      <CardHeader className="space-y-3">
+        {myCertificateVerificationCode ? (
+          <Link
+            href={`/certificates/${myCertificateVerificationCode}`}
+            target="_blank"
+            className="inline-flex items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm transition-colors hover:bg-primary/10"
+          >
+            <span className="flex items-center gap-2 font-medium text-primary">
+              <AwardIcon className="size-4" />
+              You have a certificate
             </span>
+            <ExternalLinkIcon className="size-3.5 text-primary" />
+          </Link>
+        ) : null}
+        <div className="space-y-2">
+          <div className="flex items-baseline gap-2">
+            <CardTitle className="text-3xl font-bold tracking-tight">
+              {formatPrice(course.price)}
+            </CardTitle>
+            {!isFree && (
+              <span className="text-sm text-muted-foreground line-through">
+                ${(course.price * 1.5).toFixed(2)}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            One-time payment • Lifetime access
+          </p>
+          {ratingCount > 0 ? (
+            <RatingBadge
+              avg={ratingAvg}
+              count={ratingCount}
+              className="pt-1 text-sm"
+            />
+          ) : (
+            <p className="pt-1 text-xs text-muted-foreground">No reviews yet</p>
           )}
         </div>
-        <p className="text-xs text-muted-foreground">
-          One-time payment • Lifetime access
-        </p>
-        {ratingCount > 0 ? (
-          <RatingBadge
-            avg={ratingAvg}
-            count={ratingCount}
-            className="pt-1 text-sm"
-          />
-        ) : (
-          <p className="pt-1 text-xs text-muted-foreground">No reviews yet</p>
-        )}
       </CardHeader>
 
       <CardContent className="space-y-5">

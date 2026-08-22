@@ -32,8 +32,11 @@ model User {
   commentLikes    LessonCommentLike[]
   courseReviews   CourseReview[]
   wishlistItems   WishlistItem[]
+  certificates    Certificate[]
 
   stripeCustomerId String? @unique
+
+  showCertificatesPublicly Boolean @default(true)
 
   role       String?
   banned     Boolean?  @default(false)
@@ -132,6 +135,7 @@ model Course {
   enrollment     Enrollment[]
   courseReviews  CourseReview[]
   wishlistItems  WishlistItem[]
+  certificates   Certificate[]
 
   stripePriceId String @unique
 }
@@ -346,4 +350,33 @@ model WishlistItem {
   @@index([userId, createdAt])
   @@index([courseId])
   @@map("wishlist_item")
+}
+
+model Certificate {
+  id               String @id @default(cuid())
+  verificationCode String @unique
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  // Snapshot fields — fallback ONLY when the course is deleted (course becomes null).
+  // The public page prefers live course data; these are insurance against deletion.
+  courseTitleSnapshot    String
+  courseSlugSnapshot     String
+  levelSnapshot          CourseLevel
+  durationSnapshot       Int
+  instructorNameSnapshot String
+  lessonsCountSnapshot   Int
+
+  recipientName String
+  issuedAt      DateTime @default(now())
+
+  @@unique([userId, courseId])
+  @@index([verificationCode])
+  @@index([userId, issuedAt])
+  @@index([courseId])
+  @@map("certificate")
 }

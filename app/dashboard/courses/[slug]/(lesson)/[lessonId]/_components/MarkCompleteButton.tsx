@@ -18,19 +18,24 @@ import { Button } from "@/components/ui/button";
 import { tryCatch } from "@/hooks/try-catch";
 
 import { setLessonCompletionAction } from "../actions";
+import { CertificateIssuedDialog } from "./CertificateIssuedDialog";
 
 interface MarkCompleteButtonProps {
   lessonId: string;
   completed: boolean;
+  courseSlug: string;
 }
 
 export function MarkCompleteButton({
   lessonId,
   completed,
+  courseSlug,
 }: MarkCompleteButtonProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [issuedCode, setIssuedCode] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   function runToggle(next: boolean) {
     startTransition(async () => {
@@ -51,72 +56,99 @@ export function MarkCompleteButton({
       toast.success(result.message);
       setIsConfirmOpen(false);
       router.refresh();
+
+      if (result.data?.certificateJustIssued && result.data.verificationCode) {
+        setIssuedCode(result.data.verificationCode);
+        setDialogOpen(true);
+      }
     });
   }
 
   if (!completed) {
     return (
-      <Button
-        size="lg"
-        className="w-full sm:w-auto"
-        onClick={() => runToggle(true)}
-        disabled={isPending}
-      >
-        {isPending ? (
-          <Loader2Icon className="size-4 animate-spin" />
-        ) : (
-          <CircleIcon className="size-4" />
-        )}
-        Mark as completed
-      </Button>
+      <>
+        <Button
+          size="lg"
+          className="w-full sm:w-auto"
+          onClick={() => runToggle(true)}
+          disabled={isPending}
+        >
+          {isPending ? (
+            <Loader2Icon className="size-4 animate-spin" />
+          ) : (
+            <CircleIcon className="size-4" />
+          )}
+          Mark as completed
+        </Button>
+
+        {issuedCode ? (
+          <CertificateIssuedDialog
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+            verificationCode={issuedCode}
+            courseSlug={courseSlug}
+          />
+        ) : null}
+      </>
     );
   }
 
   return (
-    <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-      <AlertDialogTrigger
-        render={
-          <Button
-            variant="outline"
-            size="lg"
-            className="w-full sm:w-auto"
-            disabled={isPending}
-          >
-            <CheckCircle2Icon className="size-4 text-primary" />
-            Completed
-          </Button>
-        }
-      />
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Mark as incomplete?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This lesson will be removed from your completed progress.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setIsConfirmOpen(false)}
-            disabled={isPending}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            variant="destructive"
-            onClick={() => runToggle(false)}
-            disabled={isPending}
-          >
-            {isPending ? (
-              <Loader2Icon className="size-4 animate-spin" />
-            ) : (
-              "Mark as incomplete"
-            )}
-          </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <>
+      <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <AlertDialogTrigger
+          render={
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full sm:w-auto"
+              disabled={isPending}
+            >
+              <CheckCircle2Icon className="size-4 text-primary" />
+              Completed
+            </Button>
+          }
+        />
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mark as incomplete?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This lesson will be removed from your completed progress.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsConfirmOpen(false)}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => runToggle(false)}
+              disabled={isPending}
+            >
+              {isPending ? (
+                <Loader2Icon className="size-4 animate-spin" />
+              ) : (
+                "Mark as incomplete"
+              )}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {issuedCode ? (
+        <CertificateIssuedDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          verificationCode={issuedCode}
+          courseSlug={courseSlug}
+        />
+      ) : null}
+    </>
   );
 }

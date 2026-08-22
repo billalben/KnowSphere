@@ -1,46 +1,36 @@
-import { ConstructionIcon, SettingsIcon } from "lucide-react";
+import { SettingsIcon } from "lucide-react";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { getMyCertificateVisibility } from "@/app/data/user/get-my-certificate-visibility";
+
+import { CertificateVisibilityCard } from "./_components/CertificateVisibilityCard";
 
 export const metadata = {
   title: "Settings | KnowSphere",
 };
 
-export default function SettingsPage() {
-  return (
-    <div className="space-y-1">
-      <h2 className="text-2xl font-bold tracking-tight">Settings</h2>
-      <p className="text-sm text-muted-foreground">
-        Configure your learning preferences and notifications.
-      </p>
+export default async function SettingsPage() {
+  const showCertificatesPublicly = await getMyCertificateVisibility();
 
-      <Card className="mx-auto max-w-md">
-        <CardHeader className="items-center text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-            <SettingsIcon
-              className="size-6 text-muted-foreground"
-              aria-hidden
-            />
-          </div>
-          <CardTitle>Settings coming soon</CardTitle>
-          <CardDescription>
-            Notification preferences, playback speed, and other options will
-            live here.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center pb-8">
-          <ConstructionIcon
-            className="size-5 text-muted-foreground"
-            aria-hidden
-          />
-        </CardContent>
-      </Card>
+  return (
+    <div className="space-y-6">
+      <div className="space-y-1">
+        <h2 className="text-2xl font-bold tracking-tight">Settings</h2>
+        <p className="text-sm text-muted-foreground">
+          Configure your learning preferences and privacy.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 pt-2">
+          <SettingsIcon className="size-4 text-muted-foreground" />
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            Privacy
+          </h3>
+        </div>
+        <CertificateVisibilityCard
+          initialValue={showCertificatesPublicly}
+        />
+      </div>
     </div>
   );
 }

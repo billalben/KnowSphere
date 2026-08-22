@@ -46,7 +46,11 @@ export function LessonInfo({
         </h1>
 
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <MarkCompleteButton lessonId={lessonId} completed={completed} />
+          <MarkCompleteButton
+            lessonId={lessonId}
+            completed={completed}
+            courseSlug={courseSlug}
+          />
           <LessonNav
             courseSlug={courseSlug}
             prevLessonId={prevLessonId}

@@ -5,6 +5,7 @@ import { getCourseRatingAggregate } from "@/app/data/course/get-course-reviews";
 import { isCourseWishlisted } from "@/app/data/course/get-wishlist-state";
 import { checkIfCourseBought } from "@/app/data/user/user-is-enrolled";
 import { getOptionalSession } from "@/app/(public)/_lib/get-optional-session";
+import prisma from "@/lib/prisma";
 import { CoverImage } from "./_components/CoverImage";
 import { CourseCurriculum } from "./_components/CourseCurriculum";
 import { CourseHeader } from "./_components/CourseHeader";
@@ -36,12 +37,23 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
   const currentUserId = session?.user?.id ?? null;
   const isSignedIn = !!session?.user;
 
-  const [isEnrolled, aggregate, isWishlisted] = await Promise.all([
+  const [isEnrolled, aggregate, isWishlisted, myCertificate] = await Promise.all([
     checkIfCourseBought({ courseId: course.id }),
     getCourseRatingAggregate({ courseId: course.id }),
     currentUserId
       ? isCourseWishlisted({ courseId: course.id, userId: currentUserId })
       : Promise.resolve(false),
+    currentUserId
+      ? prisma.certificate.findUnique({
+          where: {
+            userId_courseId: {
+              userId: currentUserId,
+              courseId: course.id,
+            },
+          },
+          select: { verificationCode: true },
+        })
+      : Promise.resolve(null),
   ]);
 
   const totalLessons = course.courseChapters.reduce(
@@ -89,6 +101,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
             ratingAvg={aggregate.avg}
             ratingCount={aggregate.count}
             isWishlisted={isWishlisted}
+            myCertificateVerificationCode={myCertificate?.verificationCode ?? null}
           />
         </aside>
       </div>
