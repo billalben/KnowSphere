@@ -44,6 +44,20 @@ export async function getCourseBySlug(slug: string) {
           },
         },
       },
+      courseReviews: {
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          rating: true,
+          comment: true,
+          isEdited: true,
+          createdAt: true,
+          updatedAt: true,
+          user: {
+            select: { id: true, name: true, image: true, role: true },
+          },
+        },
+      },
     },
   });
 
@@ -51,7 +65,22 @@ export async function getCourseBySlug(slug: string) {
     notFound();
   }
 
-  return course;
+  const reviews = course.courseReviews.map((r) => ({
+    id: r.id,
+    rating: r.rating,
+    comment: r.comment,
+    isEdited: r.isEdited,
+    createdAt: r.createdAt,
+    updatedAt: r.updatedAt,
+    author: {
+      id: r.user.id,
+      name: r.user.name,
+      image: r.user.image,
+      role: r.user.role,
+    },
+  }));
+
+  return { ...course, courseReviews: reviews };
 }
 
 export type tCourseDetail = Awaited<ReturnType<typeof getCourseBySlug>>;

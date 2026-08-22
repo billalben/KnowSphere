@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { RatingBadge } from "@/components/general/RatingBadge";
 import { useConstructUrl } from "@/hooks/use-construct";
 import { cn } from "@/lib/utils";
 import { ClockIcon, GraduationCapIcon, PlayCircleIcon } from "lucide-react";
@@ -90,6 +91,12 @@ export function CourseCard({ course, className }: CourseCardProps) {
         <p className="line-clamp-2 flex-1 text-sm leading-relaxed text-muted-foreground">
           {course.smallDesc}
         </p>
+
+        {course.reviewCount > 0 ? (
+          <div className="flex">
+            <RatingBadge avg={course.reviewAvg} count={course.reviewCount} />
+          </div>
+        ) : null}
 
         <div className="flex items-center justify-between border-t border-border pt-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-3">

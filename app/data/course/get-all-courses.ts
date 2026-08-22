@@ -28,28 +28,44 @@ export async function getAllCourses() {
           },
         },
       },
+      courseReviews: {
+        select: {
+          rating: true,
+        },
+      },
     },
     orderBy: [{ createdAt: "desc" }, { updatedAt: "desc" }],
   });
 
-  return courses.map((course) => ({
-    id: course.id,
-    title: course.title,
-    smallDesc: course.smallDesc,
-    duration: course.duration,
-    level: course.level,
-    status: course.status,
-    price: course.price,
-    fileKey: course.fileKey,
-    slug: course.slug,
-    createdAt: course.createdAt,
-    updatedAt: course.updatedAt,
-    lessonsCount: course.courseChapters.reduce(
-      (acc, chapter) => acc + chapter.lessons.length,
-      0,
-    ),
-    chaptersCount: course.courseChapters.length,
-  }));
+  return courses.map((course) => {
+    const ratings = course.courseReviews;
+    const reviewCount = ratings.length;
+    const reviewAvg =
+      reviewCount === 0
+        ? 0
+        : ratings.reduce((acc, r) => acc + r.rating, 0) / reviewCount;
+
+    return {
+      id: course.id,
+      title: course.title,
+      smallDesc: course.smallDesc,
+      duration: course.duration,
+      level: course.level,
+      status: course.status,
+      price: course.price,
+      fileKey: course.fileKey,
+      slug: course.slug,
+      createdAt: course.createdAt,
+      updatedAt: course.updatedAt,
+      lessonsCount: course.courseChapters.reduce(
+        (acc, chapter) => acc + chapter.lessons.length,
+        0,
+      ),
+      chaptersCount: course.courseChapters.length,
+      reviewAvg,
+      reviewCount,
+    };
+  });
 }
 
 export type tCourse = Awaited<ReturnType<typeof getAllCourses>>[number];

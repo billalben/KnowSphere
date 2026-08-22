@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { RatingBadge } from "@/components/general/RatingBadge";
 import { type tCourseDetail } from "@/app/data/course/get-course-by-slug";
 import {
   AwardIcon,
@@ -29,6 +30,8 @@ interface CourseSummaryCardProps {
   slug: string;
   isEnrolled: boolean;
   isSignedIn: boolean;
+  ratingAvg: number;
+  ratingCount: number;
 }
 
 interface StatItemProps {
@@ -77,6 +80,8 @@ export function CourseSummaryCard({
   slug,
   isEnrolled,
   isSignedIn,
+  ratingAvg,
+  ratingCount,
 }: CourseSummaryCardProps) {
   const levelLabel =
     course.level.charAt(0) + course.level.slice(1).toLowerCase();
@@ -99,6 +104,15 @@ export function CourseSummaryCard({
         <p className="text-xs text-muted-foreground">
           One-time payment • Lifetime access
         </p>
+        {ratingCount > 0 ? (
+          <RatingBadge
+            avg={ratingAvg}
+            count={ratingCount}
+            className="pt-1 text-sm"
+          />
+        ) : (
+          <p className="pt-1 text-xs text-muted-foreground">No reviews yet</p>
+        )}
       </CardHeader>
 
       <CardContent className="space-y-5">

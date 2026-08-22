@@ -1,12 +1,14 @@
 import { type Metadata } from "next";
 
 import { getCourseBySlug } from "@/app/data/course/get-course-by-slug";
+import { getCourseRatingAggregate } from "@/app/data/course/get-course-reviews";
 import { checkIfCourseBought } from "@/app/data/user/user-is-enrolled";
 import { getOptionalSession } from "@/app/(public)/_lib/get-optional-session";
 import { CoverImage } from "./_components/CoverImage";
 import { CourseCurriculum } from "./_components/CourseCurriculum";
 import { CourseHeader } from "./_components/CourseHeader";
 import { CourseInfoTags } from "./_components/CourseInfoTags";
+import { CourseReviewsSection } from "./_components/CourseReviewsSection";
 import { CourseSummaryCard } from "./_components/CourseSummaryCard";
 import { DescriptionSection } from "./_components/DescriptionSection";
 
@@ -29,9 +31,10 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
   const { slug } = await params;
   const course = await getCourseBySlug(slug);
 
-  const [session, isEnrolled] = await Promise.all([
+  const [session, isEnrolled, aggregate] = await Promise.all([
     getOptionalSession(),
     checkIfCourseBought({ courseId: course.id }),
+    getCourseRatingAggregate({ courseId: course.id }),
   ]);
   const isSignedIn = !!session?.user;
 
@@ -39,6 +42,12 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
     (acc, chapter) => acc + chapter.lessons.length,
     0,
   );
+
+  const currentUserId = session?.user?.id ?? null;
+  const myReview =
+    currentUserId
+      ? course.courseReviews.find((r) => r.author.id === currentUserId) ?? null
+      : null;
 
   return (
     <div className="pt-24 lg:pt-32 pb-12 lg:pb-16">
@@ -52,6 +61,17 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
 
           <DescriptionSection description={course.description} />
 
+          <CourseReviewsSection
+            courseId={course.id}
+            isEnrolled={isEnrolled}
+            currentUserId={currentUserId}
+            initialReviews={course.courseReviews}
+            initialTotal={course.courseReviews.length}
+            initialAvg={aggregate.avg}
+            initialCount={aggregate.count}
+            myReview={myReview}
+          />
+
           <CourseCurriculum chapters={course.courseChapters} />
         </div>
 
@@ -62,6 +82,8 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
             slug={slug}
             isEnrolled={isEnrolled}
             isSignedIn={isSignedIn}
+            ratingAvg={aggregate.avg}
+            ratingCount={aggregate.count}
           />
         </aside>
       </div>

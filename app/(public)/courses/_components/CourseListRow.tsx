@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { RatingBadge } from "@/components/general/RatingBadge";
 import { useConstructUrl } from "@/hooks/use-construct";
 import { cn } from "@/lib/utils";
 import { ClockIcon, GraduationCapIcon, PlayCircleIcon } from "lucide-react";
@@ -81,6 +82,15 @@ export function CourseListRow({ course, className }: CourseListRowProps) {
           <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
             {course.smallDesc}
           </p>
+
+          {course.reviewCount > 0 ? (
+            <div className="pt-0.5">
+              <RatingBadge
+                avg={course.reviewAvg}
+                count={course.reviewCount}
+              />
+            </div>
+          ) : null}
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3 text-xs text-muted-foreground">

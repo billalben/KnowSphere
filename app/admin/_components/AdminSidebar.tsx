@@ -12,6 +12,7 @@ import {
   FolderIcon,
   MessageCircleIcon,
   MessageCircleQuestionMarkIcon,
+  StarIcon,
 } from "lucide-react";
 
 import {
@@ -48,6 +49,11 @@ export function AdminSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       title: "Courses",
       url: "/admin/courses",
       icon: <BookCheckIcon size={16} />,
+    },
+    {
+      title: "Reviews",
+      url: "/admin/reviews",
+      icon: <StarIcon size={16} />,
     },
     {
       title: "Projects",
