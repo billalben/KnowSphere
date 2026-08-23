@@ -21,7 +21,7 @@ export const auth = betterAuth({
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {
         const { error } = await resend.emails.send({
-          from: "KnowSphere <onboarding@resend.dev>",
+          from: "KnowSphere <noreply@billalbenz.com>",
           to: [email],
           subject: "Your OTP Code",
           // react: EmailTemplate({ firstName: 'John' }),
