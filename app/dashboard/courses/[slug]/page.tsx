@@ -27,7 +27,7 @@ export default async function CourseLearnOverviewPage({ params }: PageParams) {
   });
 
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-4 pb-12">
+    <div className="flex flex-1 flex-col space-y-6">
       <CourseOverviewHeader
         slug={course.slug}
         title={course.title}
@@ -49,6 +49,7 @@ export default async function CourseLearnOverviewPage({ params }: PageParams) {
 
       {totalLessons === 0 ? (
         <EmptyState
+          fill
           icon={VideoIcon}
           title="Course content coming soon"
           description="The instructor is still building this course. Check back later."

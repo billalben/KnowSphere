@@ -27,7 +27,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Header */}
         <DashboardHeader />
 
-        <div className="flex min-h-0 flex-1 flex-col space-y-4 overflow-y-auto p-4 md:space-y-6 lg:py-6">
+        <div className="flex min-h-0 flex-1 flex-col space-y-4 overflow-y-auto p-4 [&>*]:shrink-0 md:space-y-6 lg:py-6">
           {children}
         </div>
       </SidebarInset>
