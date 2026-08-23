@@ -84,16 +84,16 @@ model Activity {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
 
-  actorType ActorType
-  actorId   String?
-  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actorType         ActorType
+  actorId           String?
+  actor             User?     @relation(fields: [actorId], references: [id], onDelete: SetNull)
   actorNameSnapshot String?
 
-  action     ActivityAction
-  entityType ActivityEntityType
-  entityId   String?
+  action      ActivityAction
+  entityType  ActivityEntityType
+  entityId    String?
   entityLabel String?
-  metadata   Json?
+  metadata    Json?
 
   @@index([createdAt])
   @@index([actorId, createdAt])
@@ -133,10 +133,13 @@ model Account {
   refreshTokenExpiresAt DateTime?
   scope                 String?
   password              String?
+  issuer                String
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
+  @@unique([providerId, accountId])
   @@index([userId])
+  @@index([issuer, accountId])
   @@map("account")
 }
 

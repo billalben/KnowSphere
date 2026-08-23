@@ -122,6 +122,7 @@ export const HeroHeader = () => {
                   name={session.user?.name}
                   email={session.user?.email}
                   imageUrl={session.user?.image}
+                  role={session.user?.role ?? null}
                   onLogout={handleSignout}
                 />
               ) : (
