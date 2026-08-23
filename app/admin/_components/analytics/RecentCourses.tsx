@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import {
   ChevronRightIcon,
@@ -7,6 +6,7 @@ import {
   GraduationCapIcon,
 } from "lucide-react";
 
+import { CourseImage } from "@/components/general/CourseImage";
 import { EmptyState } from "@/components/general/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -17,7 +17,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { env } from "@/lib/env";
 import type { tAnalyticsRecentCourse } from "@/app/data/admin/admin-get-analytics";
 
 interface RecentCoursesProps {
@@ -44,11 +43,6 @@ function formatLevel(level: tAnalyticsRecentCourse["level"]): string {
 
 function formatStatus(status: tAnalyticsRecentCourse["status"]): string {
   return status.charAt(0) + status.slice(1).toLowerCase();
-}
-
-function thumbnailUrl(fileKey: string | null): string {
-  if (!fileKey) return "/course-placeholder.png";
-  return `https://${env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES}.t3.tigrisfiles.io/${fileKey}`;
 }
 
 function formatRelative(date: Date): string {
@@ -110,12 +104,11 @@ export function RecentCourses({ courses }: RecentCoursesProps) {
                   className="group flex items-center gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-muted/50"
                 >
                   <div className="relative size-12 shrink-0 overflow-hidden rounded-md bg-muted">
-                    <Image
-                      src={thumbnailUrl(course.fileKey)}
+                    <CourseImage
+                      fileKey={course.fileKey}
                       alt={course.title}
-                      fill
                       sizes="48px"
-                      className="object-cover"
+                      compact
                     />
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col gap-1">

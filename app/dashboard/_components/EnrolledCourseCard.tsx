@@ -1,11 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRightIcon, BookOpenIcon, ClockIcon } from "lucide-react";
 
+import { CourseImage } from "@/components/general/CourseImage";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { env } from "@/lib/env";
 import type { tEnrolledCourse } from "@/app/data/user/get-my-enrolled-courses";
 
 interface EnrolledCourseCardProps {
@@ -25,11 +24,6 @@ function formatDuration(minutes: number): string {
   return `${hours}h ${mins}min`;
 }
 
-function thumbnailUrl(fileKey: string | null): string {
-  if (!fileKey) return "/course-placeholder.png";
-  return `https://${env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES}.t3.tigrisfiles.io/${fileKey}`;
-}
-
 export function EnrolledCourseCard({ course }: EnrolledCourseCardProps) {
   const continueHref = course.resumeLessonId
     ? `/dashboard/courses/${course.slug}/${course.resumeLessonId}`
@@ -42,12 +36,11 @@ export function EnrolledCourseCard({ course }: EnrolledCourseCardProps) {
   return (
     <Card className="group flex flex-col overflow-hidden pt-0">
       <div className="relative aspect-video w-full overflow-hidden bg-muted">
-        <Image
-          src={thumbnailUrl(course.fileKey)}
+        <CourseImage
+          fileKey={course.fileKey}
           alt={course.title}
-          fill
           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          imageClassName="transition-transform duration-500 group-hover:scale-105"
         />
       </div>
 

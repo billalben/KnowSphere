@@ -10,6 +10,7 @@ export async function ContactMessagesList() {
   if (messages.length === 0) {
     return (
       <EmptyState
+        fill
         icon={MessageCircleIcon}
         title="No messages yet"
         description="When visitors send a message via the contact form, it will appear here."

@@ -1,9 +1,7 @@
 "use client";
 
-import { useConstructUrl } from "@/hooks/use-construct";
+import { CourseImage } from "@/components/general/CourseImage";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
-import { useState } from "react";
 
 interface CoverImageProps {
   fileKey: string | null;
@@ -12,11 +10,6 @@ interface CoverImageProps {
 }
 
 export function CoverImage({ fileKey, title, className }: CoverImageProps) {
-  const [imageError, setImageError] = useState(false);
-
-  const imageUrl = useConstructUrl(fileKey);
-  const src = imageError || !fileKey ? "/course-placeholder.png" : imageUrl;
-
   return (
     <div
       className={cn(
@@ -24,14 +17,12 @@ export function CoverImage({ fileKey, title, className }: CoverImageProps) {
         className,
       )}
     >
-      <Image
-        src={src}
+      <CourseImage
+        fileKey={fileKey}
         alt={title}
-        fill
         priority
         sizes="(max-width: 1024px) 100vw, 70vw"
-        className="object-cover transition-transform duration-500 group-hover:scale-105"
-        onError={() => setImageError(true)}
+        imageClassName="transition-transform duration-500 group-hover:scale-105"
       />
       <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-transparent" />
     </div>

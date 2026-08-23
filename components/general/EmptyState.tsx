@@ -9,6 +9,8 @@ interface EmptyStateProps {
   description?: ReactNode;
   action?: ReactNode;
   className?: string;
+  /** Stretch to take all remaining height of the nearest flex column parent. */
+  fill?: boolean;
 }
 
 export function EmptyState({
@@ -17,11 +19,13 @@ export function EmptyState({
   description,
   action,
   className,
+  fill = false,
 }: EmptyStateProps) {
   return (
     <div
       className={cn(
         "flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center",
+        fill && "flex-1",
         className,
       )}
     >

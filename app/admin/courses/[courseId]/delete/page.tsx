@@ -22,14 +22,16 @@ export default async function DeleteCoursePage({ params }: { params: Params }) {
         title="Delete Course"
       />
 
-      <div className="flex flex-1 items-center justify-center">
+      {/* Grid + min-h ensures the card is meaningfully centered in the admin
+          content area even though the parent isn't a flex container. */}
+      <div className="grid min-h-[60vh] place-items-center">
         <Card className="w-full max-w-xl">
           <CardHeader>
             <CardTitle>Are you sure?</CardTitle>
             <CardDescription>
               This action cannot be undone. This will permanently delete the
-              course <strong>&ldquo;{course.title}&rdquo;</strong>, including all
-              chapters and lessons.
+              course <strong>&ldquo;{course.title}&rdquo;</strong>, including
+              all chapters and lessons.
             </CardDescription>
           </CardHeader>
 

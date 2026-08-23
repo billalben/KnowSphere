@@ -15,6 +15,7 @@ export function CertificatesList({ certificates }: CertificatesListProps) {
   if (certificates.length === 0) {
     return (
       <EmptyState
+        fill
         icon={AwardIcon}
         title="No certificates yet"
         description="Complete a course end-to-end to earn a certificate you can share."

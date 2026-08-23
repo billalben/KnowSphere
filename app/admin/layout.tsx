@@ -9,7 +9,7 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <SidebarProvider
-      className="h-svh"
+      className="h-svh overflow-hidden"
       style={
         {
           "--sidebar-width": "calc(var(--spacing) * 52)",
@@ -20,11 +20,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* Sidebar */}
       <AdminSidebar variant="inset" />
 
-      <SidebarInset>
+      <SidebarInset className="min-h-0 overflow-hidden">
         {/* Header */}
         <AdminHeader />
 
-        <div className="min-h-0 flex-1 space-y-4 p-4 md:space-y-6 lg:py-6">
+        <div className="flex min-h-0 flex-1 flex-col space-y-4 overflow-y-auto p-4 md:space-y-6 lg:py-6">
           {children}
         </div>
       </SidebarInset>

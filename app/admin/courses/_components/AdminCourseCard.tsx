@@ -1,6 +1,7 @@
 "use client";
 
 import { tAdminCourse } from "@/app/data/admin/admin-get-courses";
+import { CourseImage } from "@/components/general/CourseImage";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -9,7 +10,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useConstructUrl } from "@/hooks/use-construct";
 import { cn } from "@/lib/utils";
 import {
   ClockIcon,
@@ -19,9 +19,7 @@ import {
   PencilIcon,
   Trash2Icon,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 
 interface iAppProps {
   course: tAdminCourse;
@@ -42,22 +40,14 @@ function formatPrice(price: number): string {
 }
 
 export function AdminCourseCard({ course }: iAppProps) {
-  const [imageError, setImageError] = useState(false);
-
-  const imageUrl = useConstructUrl(course.fileKey);
-  const src =
-    imageError || !course.fileKey ? "/course-placeholder.png" : imageUrl;
-
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-xl bg-card text-card-foreground shadow-xs border border-border transition-shadow hover:shadow-lg">
       <div className="relative aspect-video w-full overflow-hidden bg-muted">
-        <Image
-          src={src}
+        <CourseImage
+          fileKey={course.fileKey}
           alt={course.title}
-          fill
           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={() => setImageError(true)}
+          imageClassName="transition-transform duration-500 group-hover:scale-105"
         />
         {course.status && (
           <Badge className="absolute" style={{ top: 8, left: 8 }}>

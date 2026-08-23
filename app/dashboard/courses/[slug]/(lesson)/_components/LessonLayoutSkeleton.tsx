@@ -17,7 +17,7 @@ export function LessonLayoutSkeleton() {
           <LessonContentSkeleton />
         </div>
 
-        <aside className="lg:sticky lg:top-(--header-height) lg:self-start lg:max-h-[calc(100svh-var(--header-height)-1rem)] lg:overflow-y-auto">
+        <aside className="lg:sticky lg:top-0 lg:self-start lg:max-h-[calc(100svh-var(--header-height)-var(--spacing)*12)] lg:overflow-y-auto">
           <Card className="overflow-hidden p-0">
             <div className="space-y-2 border-b p-4">
               <div className="flex items-center justify-between">

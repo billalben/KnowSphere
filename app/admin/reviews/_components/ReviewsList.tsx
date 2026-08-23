@@ -10,6 +10,7 @@ export async function ReviewsList() {
   if (reviews.length === 0) {
     return (
       <EmptyState
+        fill
         icon={StarIcon}
         title="No reviews yet"
         description="When students leave a rating and comment, it will appear here."

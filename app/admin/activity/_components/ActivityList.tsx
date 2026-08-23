@@ -34,6 +34,7 @@ export async function ActivityList({ filters, filterParams }: Props) {
   if (page.items.length === 0) {
     return (
       <EmptyState
+        fill
         icon={HistoryIcon}
         title="No activity yet"
         description="When admins perform actions, they will appear here."

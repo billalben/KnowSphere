@@ -1,13 +1,11 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { CourseImage } from "@/components/general/CourseImage";
 import { RatingBadge } from "@/components/general/RatingBadge";
-import { useConstructUrl } from "@/hooks/use-construct";
 import { cn } from "@/lib/utils";
 import { ClockIcon, GraduationCapIcon, PlayCircleIcon } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 
 import { type tCourse } from "@/app/data/course/get-all-courses";
 
@@ -37,11 +35,6 @@ const levelStyles: Record<string, string> = {
 };
 
 export function CourseListRow({ course, className }: CourseListRowProps) {
-  const [imageError, setImageError] = useState(false);
-
-  const imageUrl = useConstructUrl(course.fileKey);
-  const src = imageError || !course.fileKey ? "/course-placeholder.png" : imageUrl;
-
   const levelLabel =
     course.level.charAt(0) + course.level.slice(1).toLowerCase();
 
@@ -54,13 +47,11 @@ export function CourseListRow({ course, className }: CourseListRowProps) {
       )}
     >
       <div className="relative aspect-video w-full overflow-hidden bg-muted sm:aspect-auto sm:h-auto sm:w-60 sm:shrink-0">
-        <Image
-          src={src}
+        <CourseImage
+          fileKey={course.fileKey}
           alt={course.title}
-          fill
           sizes="(max-width: 640px) 100vw, 240px"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={() => setImageError(true)}
+          imageClassName="transition-transform duration-500 group-hover:scale-105"
         />
         <Badge
           className={cn(

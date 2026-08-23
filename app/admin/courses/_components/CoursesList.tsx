@@ -12,6 +12,7 @@ export async function CoursesList() {
   if (courses.length === 0) {
     return (
       <EmptyState
+        fill
         icon={BookOpenIcon}
         title="No courses yet"
         description="You haven’t created any courses yet."

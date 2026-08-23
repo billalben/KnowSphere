@@ -1,9 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeftIcon, PlayCircleIcon } from "lucide-react";
 
+import { CourseImage } from "@/components/general/CourseImage";
 import { Button } from "@/components/ui/button";
-import { env } from "@/lib/env";
 
 interface CourseOverviewHeaderProps {
   slug: string;
@@ -12,11 +11,6 @@ interface CourseOverviewHeaderProps {
   fileKey: string | null;
   resumeLessonId: string | null;
   hasStarted: boolean;
-}
-
-function thumbnailUrl(fileKey: string | null): string {
-  if (!fileKey) return "/course-placeholder.png";
-  return `https://${env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES}.t3.tigrisfiles.io/${fileKey}`;
 }
 
 export function CourseOverviewHeader({
@@ -40,12 +34,10 @@ export function CourseOverviewHeader({
       </div>
 
       <div className="relative aspect-video w-full overflow-hidden rounded-xl border bg-muted">
-        <Image
-          src={thumbnailUrl(fileKey)}
+        <CourseImage
+          fileKey={fileKey}
           alt={title}
-          fill
           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 80vw, 1024px"
-          className="object-cover"
         />
       </div>
 

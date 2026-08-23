@@ -12,6 +12,7 @@ export async function CategoriesList() {
   if (categories.length === 0) {
     return (
       <EmptyState
+        fill
         icon={TagIcon}
         title="No categories yet"
         description="Create your first category to start organising courses."

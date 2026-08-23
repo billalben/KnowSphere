@@ -43,7 +43,7 @@ export default async function ActivityPage({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-1 flex-col space-y-4">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">Activity</h1>
       </div>

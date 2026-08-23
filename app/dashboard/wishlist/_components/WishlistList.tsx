@@ -59,6 +59,7 @@ export function WishlistList({ initialPage }: WishlistListProps) {
   if (items.length === 0) {
     return (
       <EmptyState
+        fill
         icon={BookmarkIcon}
         title="Your wishlist is empty"
         description="Browse the catalog and save courses you&apos;re interested in."

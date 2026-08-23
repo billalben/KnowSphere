@@ -15,6 +15,7 @@ export function EnrolledCoursesList({ courses }: EnrolledCoursesListProps) {
   if (courses.length === 0) {
     return (
       <EmptyState
+        fill
         icon={BookOpenIcon}
         title="No courses yet"
         description="You haven't enrolled in any courses. Browse the catalog to get started."
