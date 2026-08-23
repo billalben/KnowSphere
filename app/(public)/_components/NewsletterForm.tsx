@@ -57,7 +57,7 @@ export function NewsletterForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-2" noValidate>
       <div className="flex gap-2">
-        <div className="relative">
+        <div className="relative flex-1 min-w-0">
           <MailIcon
             className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
             aria-hidden
@@ -70,7 +70,7 @@ export function NewsletterForm() {
               if (error) setError(null);
             }}
             placeholder="your@email.com"
-            className="pl-9 w-96"
+            className="pl-9 w-full"
             aria-label="Email address"
             aria-invalid={error ? true : undefined}
             disabled={pending}
