@@ -69,6 +69,7 @@ export function ContactMessageCard({ message }: ContactMessageCardProps) {
           }
           variant="outline"
           size="sm"
+          nativeButton={false}
           className="flex-1"
         >
           <MailIcon className="size-4" />
@@ -82,6 +83,7 @@ export function ContactMessageCard({ message }: ContactMessageCardProps) {
           }
           variant="destructive"
           size="sm"
+          nativeButton={false}
           className="flex-1"
         >
           <Trash2Icon className="size-4" />

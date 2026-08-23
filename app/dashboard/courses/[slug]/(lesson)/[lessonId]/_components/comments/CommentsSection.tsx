@@ -89,7 +89,11 @@ export function CommentsSection({
       }
 
       const pageData = result.data;
-      setComments((prev) => [...prev, ...pageData.items]);
+      setComments((prev) => {
+        const seen = new Set(prev.map((c) => c.id));
+        const incoming = pageData.items.filter((c) => !seen.has(c.id));
+        return incoming.length > 0 ? [...prev, ...incoming] : prev;
+      });
       setTotal(pageData.total);
       setPage(nextPage);
       setLoadingMore(false);

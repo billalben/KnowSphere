@@ -23,7 +23,7 @@ export async function getLessonReplies({
     prisma.lessonComment.count({ where }),
     prisma.lessonComment.findMany({
       where,
-      orderBy: { createdAt: "asc" },
+      orderBy: [{ createdAt: "asc" as const }, { id: "asc" as const }],
       skip: (page - 1) * pageSize,
       take: pageSize,
       select: {

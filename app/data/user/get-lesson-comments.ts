@@ -22,8 +22,8 @@ export async function getLessonComments({
   const where = { lessonId, parentId: null };
   const orderBy =
     sort === "newest"
-      ? { createdAt: "desc" as const }
-      : { createdAt: "asc" as const };
+      ? [{ createdAt: "desc" as const }, { id: "desc" as const }]
+      : [{ createdAt: "asc" as const }, { id: "asc" as const }];
 
   const [total, rows] = await Promise.all([
     prisma.lessonComment.count({ where }),

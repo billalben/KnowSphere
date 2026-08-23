@@ -125,7 +125,12 @@ export function ActivityFilters({ filterOptions }: Props) {
         </Button>
       )}
 
-      <Button variant="outline" size="sm" render={<a href={exportHref} />}>
+      <Button
+        variant="outline"
+        size="sm"
+        render={<a href={exportHref} />}
+        nativeButton={false}
+      >
         Export CSV
       </Button>
     </div>

@@ -153,11 +153,15 @@ export function CommentItem({
         return;
       }
 
-      const pageData = result.data;
-      setReplies((prev) => [...prev, ...pageData.items]);
-      setRepliesPage(nextPage);
-      setRepliesTotal(pageData.total);
-      setRepliesLoadingMore(false);
+const pageData = result.data;
+        setReplies((prev) => {
+          const seen = new Set(prev.map((r) => r.id));
+          const incoming = pageData.items.filter((r) => !seen.has(r.id));
+          return incoming.length > 0 ? [...prev, ...incoming] : prev;
+        });
+        setRepliesPage(nextPage);
+        setRepliesTotal(pageData.total);
+        setRepliesLoadingMore(false);
     })();
   }
 

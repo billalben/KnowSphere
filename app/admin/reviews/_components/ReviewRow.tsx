@@ -83,6 +83,7 @@ export function ReviewRow({ review }: ReviewRowProps) {
           }
           variant="destructive"
           size="sm"
+          nativeButton={false}
           className="w-full"
         >
           <Trash2Icon className="size-4" />

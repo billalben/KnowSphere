@@ -145,10 +145,9 @@ export function QuizPlayer({ quiz }: QuizPlayerProps) {
   }
 
   const isCurrentChecked = checked.has(currentQuestion.id);
-  const currentSelection = selections[currentQuestion.id];
-  const hasCurrentSelection = Boolean(
-    currentSelection && currentSelection.size > 0,
-  );
+  const currentSelection: Set<string> =
+    selections[currentQuestion.id] ?? new Set<string>();
+  const hasCurrentSelection = currentSelection.size > 0;
 
   const primaryLabel = !isCurrentChecked
     ? "Submit answer"
@@ -220,7 +219,7 @@ export function QuizPlayer({ quiz }: QuizPlayerProps) {
 
 interface QuestionBodyProps {
   question: tUserQuizQuestion;
-  selectedIds: Set<string> | undefined;
+  selectedIds: Set<string>;
   revealed: boolean;
   onSingleChange: (answerId: string) => void;
   onMultipleChange: (answerId: string) => void;
@@ -255,7 +254,7 @@ function QuestionBody({
 
 interface SingleBodyProps {
   question: tUserQuizQuestion;
-  selectedIds: Set<string> | undefined;
+  selectedIds: Set<string>;
   revealed: boolean;
   onSingleChange: (answerId: string) => void;
 }
@@ -266,8 +265,8 @@ function SingleQuestionBody({
   revealed,
   onSingleChange,
 }: SingleBodyProps) {
-  const value =
-    selectedIds && selectedIds.size > 0 ? Array.from(selectedIds)[0] : undefined;
+  const value: string =
+    selectedIds.size > 0 ? Array.from(selectedIds)[0] : "";
 
   return (
     <RadioGroup
@@ -279,7 +278,7 @@ function SingleQuestionBody({
           <AnswerOption
             key={answer.id}
             answer={answer}
-            isSelected={selectedIds?.has(answer.id) ?? false}
+            isSelected={selectedIds.has(answer.id)}
             revealed={revealed}
             marker={
               <RadioGroupItem
@@ -297,7 +296,7 @@ function SingleQuestionBody({
 
 interface MultipleBodyProps {
   question: tUserQuizQuestion;
-  selectedIds: Set<string> | undefined;
+  selectedIds: Set<string>;
   revealed: boolean;
   onMultipleChange: (answerId: string) => void;
 }
@@ -311,7 +310,7 @@ function MultipleQuestionBody({
   return (
     <ul className="flex flex-col gap-2">
       {question.answers.map((answer) => {
-        const checked = selectedIds?.has(answer.id) ?? false;
+        const checked = selectedIds.has(answer.id);
         return (
           <AnswerOption
             key={answer.id}
