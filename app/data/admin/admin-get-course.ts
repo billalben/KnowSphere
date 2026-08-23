@@ -22,9 +22,13 @@ export async function adminGetCourse(courseId: string) {
       price: true,
       fileKey: true,
       slug: true,
-      category: true,
       createdAt: true,
       updatedAt: true,
+
+      categories: {
+        select: { id: true, name: true, slug: true },
+        orderBy: { name: "asc" },
+      },
 
       courseChapters: {
         orderBy: { position: "asc" },

@@ -7,13 +7,19 @@ import {
 import { updateCourse } from "../actions";
 import type { CourseSchemaType } from "@/lib/zodSchemas";
 import type { tAdminGetCourse } from "@/app/data/admin/admin-get-course";
+import type { tCategoryOption } from "@/app/data/admin/admin-get-category-options";
 
 type EditCourseFormProps = {
   courseId: string;
   course: tAdminGetCourse;
+  categoryOptions: tCategoryOption[];
 };
 
-export function EditCourseForm({ courseId, course }: EditCourseFormProps) {
+export function EditCourseForm({
+  courseId,
+  course,
+  categoryOptions,
+}: EditCourseFormProps) {
   const submitAction: CourseFormProps["submitAction"] = (data) =>
     updateCourse(courseId, data);
 
@@ -23,14 +29,15 @@ export function EditCourseForm({ courseId, course }: EditCourseFormProps) {
         title: course.title,
         description: course.description ?? "",
         smallDesc: course.smallDesc,
-        fileKey: course.fileKey,
+        fileKey: course.fileKey ?? "",
         price: course.price,
         duration: course.duration,
         level: course.level as CourseSchemaType["level"],
         status: course.status as CourseSchemaType["status"],
         slug: course.slug,
-        category: course.category ?? "",
+        categories: course.categories.map((c) => c.name),
       }}
+      categoryOptions={categoryOptions}
       submitAction={submitAction}
       submitLabel="Save Changes"
       pendingLabel="Saving..."

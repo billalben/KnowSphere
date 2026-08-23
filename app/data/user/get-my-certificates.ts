@@ -14,7 +14,7 @@ export type tMyCertificate = {
     slug: string;
     title: string;
     smallDesc: string;
-    fileKey: string;
+    fileKey: string | null;
     level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
     duration: number;
   } | null;

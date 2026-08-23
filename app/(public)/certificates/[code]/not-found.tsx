@@ -5,7 +5,7 @@ import { buttonVariants } from "@/components/ui/button";
 
 export default function CertificateNotFound() {
   return (
-    <div className="min-h-screen mx-auto flex max-w-md flex-col items-center justify-center gap-6 py-24 text-center">
+    <div className="h-screen mx-auto flex max-w-md flex-col items-center justify-center gap-6 py-24 text-center">
       <div className="flex size-14 items-center justify-center rounded-full bg-muted">
         <AwardIcon className="size-7 text-muted-foreground" />
       </div>

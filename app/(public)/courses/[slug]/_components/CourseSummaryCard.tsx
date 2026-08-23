@@ -169,8 +169,12 @@ export function CourseSummaryCard({
           />
           <StatItem
             icon={TagIcon}
-            label="Category"
-            value={course.category ?? "Uncategorized"}
+            label="Categories"
+            value={
+              course.categories.length > 0
+                ? course.categories.map((c) => c.name).join(", ")
+                : "Uncategorized"
+            }
           />
           <StatItem
             icon={BookOpenIcon}

@@ -1,0 +1,2 @@
+export const MAX_CATEGORIES = 100;
+export const MAX_CATEGORIES_PER_COURSE = 10;

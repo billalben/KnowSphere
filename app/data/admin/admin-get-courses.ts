@@ -19,6 +19,10 @@ export async function adminGetCourses() {
       slug: true,
       createdAt: true,
       updatedAt: true,
+      categories: {
+        select: { id: true, name: true, slug: true },
+        orderBy: { name: "asc" },
+      },
     },
     orderBy: {
       createdAt: "desc",

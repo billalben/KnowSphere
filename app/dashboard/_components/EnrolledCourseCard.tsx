@@ -25,7 +25,7 @@ function formatDuration(minutes: number): string {
   return `${hours}h ${mins}min`;
 }
 
-function thumbnailUrl(fileKey: string): string {
+function thumbnailUrl(fileKey: string | null): string {
   if (!fileKey) return "/course-placeholder.png";
   return `https://${env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES}.t3.tigrisfiles.io/${fileKey}`;
 }

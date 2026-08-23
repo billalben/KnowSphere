@@ -20,7 +20,7 @@ export type tAnalyticsRecentCourse = {
   id: string;
   title: string;
   smallDesc: string;
-  fileKey: string;
+  fileKey: string | null;
   price: number;
   duration: number;
   level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";

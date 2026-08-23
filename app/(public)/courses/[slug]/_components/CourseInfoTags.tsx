@@ -45,11 +45,19 @@ export function CourseInfoTags({
       icon: ClockIcon,
       label: formatDuration(course.duration),
     },
-    {
-      key: "category",
-      icon: TagIcon,
-      label: course.category ?? "Uncategorized",
-    },
+    ...(course.categories.length > 0
+      ? course.categories.map((c) => ({
+          key: `category-${c.id}`,
+          icon: TagIcon,
+          label: c.name,
+        }))
+      : [
+          {
+            key: "category",
+            icon: TagIcon,
+            label: "Uncategorized",
+          },
+        ]),
     {
       key: "chapters",
       icon: BookOpenIcon,

@@ -1,4 +1,5 @@
 import { adminGetCourse } from "@/app/data/admin/admin-get-course";
+import { adminGetCategoryOptions } from "@/app/data/admin/admin-get-category-options";
 import { PageHeader } from "@/components/admin/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EditCourseForm } from "./_components/EditCourseForm";
@@ -10,7 +11,10 @@ type Params = Promise<{ courseId: string }>;
 
 export default async function EditCoursePage({ params }: { params: Params }) {
   const { courseId } = await params;
-  const course = await adminGetCourse(courseId);
+  const [course, categoryOptions] = await Promise.all([
+    adminGetCourse(courseId),
+    adminGetCategoryOptions(),
+  ]);
 
   return (
     <div>
@@ -23,7 +27,11 @@ export default async function EditCoursePage({ params }: { params: Params }) {
         </TabsList>
 
         <TabsContent value="basic-info">
-          <EditCourseForm courseId={courseId} course={course} />
+          <EditCourseForm
+            courseId={courseId}
+            course={course}
+            categoryOptions={categoryOptions}
+          />
         </TabsContent>
 
         <TabsContent value="course-structure">

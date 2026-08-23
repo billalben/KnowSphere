@@ -7,7 +7,7 @@ interface PublicLayoutProps {
 
 export default function PublicLayout({ children }: PublicLayoutProps) {
   return (
-    <div className="flex min-h-svh flex-col">
+    <div className="flex min-h-svh h-full flex-col">
       <HeroHeader />
 
       <main className="container mx-auto flex-1 px-4 md:px-6 lg:px-8">

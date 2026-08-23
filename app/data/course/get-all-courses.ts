@@ -19,6 +19,10 @@ export async function getAllCourses() {
       slug: true,
       createdAt: true,
       updatedAt: true,
+      categories: {
+        select: { id: true, name: true, slug: true },
+        orderBy: { name: "asc" },
+      },
       courseChapters: {
         select: {
           lessons: {
@@ -57,6 +61,7 @@ export async function getAllCourses() {
       slug: course.slug,
       createdAt: course.createdAt,
       updatedAt: course.updatedAt,
+      categories: course.categories,
       lessonsCount: course.courseChapters.reduce(
         (acc, chapter) => acc + chapter.lessons.length,
         0,

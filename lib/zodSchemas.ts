@@ -24,7 +24,11 @@ export const courseSchema = z.object({
   smallDesc: z
     .string()
     .max(100, "Small description must be at most 100 characters long"),
-  fileKey: z.string().min(1, "File key is required"),
+  fileKey: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((v) => (v && v.length > 0 ? v : null)),
   price: z.coerce.number().min(0, "Price must be at least 0"),
   duration: z.coerce.number().min(1, "Duration must be at least 1 minute"),
   level: z.enum(ECourseLevel).default(ECourseLevel.BEGINNER),
@@ -33,7 +37,10 @@ export const courseSchema = z.object({
     .string()
     .min(5, "Slug must be at least 5 characters long")
     .max(50, "Slug must be at most 50 characters long"),
-  category: z.string().min(3, "Category must be at least 3 characters long"),
+  categories: z
+    .array(z.string().min(2).max(50))
+    .max(10, "A course can have at most 10 categories")
+    .default([]),
 });
 
 export const chapterSchema = z.object({
@@ -115,3 +122,17 @@ export type QuizQuestionInputSchemaType = z.infer<
   typeof quizQuestionInputSchema
 >;
 export type LessonQuizSchemaType = z.infer<typeof lessonQuizSchema>;
+
+export const categoryNameSchema = z
+  .string()
+  .min(2, "Name must be at least 2 characters")
+  .max(50, "Name must be at most 50 characters")
+  .regex(
+    /^[a-zA-Z0-9 &+\-]+$/,
+    "Only letters, numbers, spaces and &+- are allowed",
+  );
+
+export const categorySchema = z.object({
+  name: categoryNameSchema,
+});
+export type CategorySchemaType = z.infer<typeof categorySchema>;

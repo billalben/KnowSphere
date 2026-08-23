@@ -27,7 +27,7 @@ export type tCourseForLearning = {
   title: string;
   slug: string;
   smallDesc: string;
-  fileKey: string;
+  fileKey: string | null;
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   courseChapters: tCourseForLearningChapter[];
 };

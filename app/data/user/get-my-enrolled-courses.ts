@@ -9,7 +9,7 @@ export type tEnrolledCourse = {
   slug: string;
   title: string;
   smallDesc: string;
-  fileKey: string;
+  fileKey: string | null;
   level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
   duration: number;
   chaptersCount: number;

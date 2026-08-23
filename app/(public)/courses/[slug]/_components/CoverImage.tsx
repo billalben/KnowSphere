@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useState } from "react";
 
 interface CoverImageProps {
-  fileKey: string;
+  fileKey: string | null;
   title: string;
   className?: string;
 }

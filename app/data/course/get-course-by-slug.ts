@@ -18,9 +18,12 @@ export async function getCourseBySlug(slug: string) {
       price: true,
       fileKey: true,
       slug: true,
-      category: true,
       createdAt: true,
       updatedAt: true,
+      categories: {
+        select: { id: true, name: true, slug: true },
+        orderBy: { name: "asc" },
+      },
       user: {
         select: {
           name: true,

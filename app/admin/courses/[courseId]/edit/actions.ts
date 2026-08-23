@@ -16,6 +16,10 @@ import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 import { request } from "@arcjet/next";
 import { revalidatePath } from "next/cache";
 import { adminLog } from "@/lib/activity/admin-log";
+import {
+  CATEGORY_LIMIT_EXCEEDED,
+  resolveCategories,
+} from "@/app/data/course/resolve-categories";
 
 const aj = arcjet
   .withRule(
@@ -51,15 +55,41 @@ export async function updateCourse(courseId: string, values: CourseSchemaType) {
       return errorResponse("Invalid data", z.treeifyError(validatedData.error));
     }
 
+    const { categories: categoryNames, ...courseFields } = validatedData.data;
+
     const before = await prisma.course.findUnique({
       where: { id: courseId },
-      select: { title: true, status: true, price: true, level: true, slug: true },
+      select: {
+        title: true,
+        status: true,
+        price: true,
+        level: true,
+        slug: true,
+        categories: { select: { id: true, name: true }, orderBy: { name: "asc" } },
+      },
     });
 
-    const course = await prisma.course.update({
-      where: { id: courseId },
-      data: validatedData.data,
-    });
+    let course;
+    try {
+      course = await prisma.$transaction(async (tx) => {
+        const categories = await resolveCategories(categoryNames, tx);
+
+        return tx.course.update({
+          where: { id: courseId },
+          data: {
+            ...courseFields,
+            categories: {
+              set: categories.map((c) => ({ id: c.id })),
+            },
+          },
+        });
+      });
+    } catch (err) {
+      if (err instanceof CATEGORY_LIMIT_EXCEEDED) {
+        return errorResponse(err.message, null);
+      }
+      throw err;
+    }
 
     if (before) {
       const statusChanged = before.status !== course.status;
@@ -68,6 +98,14 @@ export async function updateCourse(courseId: string, values: CourseSchemaType) {
         changedFields.price = { from: before.price, to: course.price };
       if (before.level !== course.level)
         changedFields.level = { from: before.level, to: course.level };
+
+      const beforeNames = before.categories.map((c) => c.name);
+      const categoriesChanged =
+        beforeNames.length !== categoryNames.length ||
+        beforeNames.some((name, idx) => name !== categoryNames[idx]);
+      if (categoriesChanged) {
+        changedFields.categories = { from: beforeNames, to: categoryNames };
+      }
 
       if (statusChanged) {
         await adminLog({

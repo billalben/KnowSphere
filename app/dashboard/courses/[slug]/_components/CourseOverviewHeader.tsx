@@ -9,12 +9,12 @@ interface CourseOverviewHeaderProps {
   slug: string;
   title: string;
   smallDesc: string;
-  fileKey: string;
+  fileKey: string | null;
   resumeLessonId: string | null;
   hasStarted: boolean;
 }
 
-function thumbnailUrl(fileKey: string): string {
+function thumbnailUrl(fileKey: string | null): string {
   if (!fileKey) return "/course-placeholder.png";
   return `https://${env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES}.t3.tigrisfiles.io/${fileKey}`;
 }

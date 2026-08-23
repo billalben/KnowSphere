@@ -13,9 +13,10 @@ export type tWishlistCourse = {
   level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   price: number;
-  fileKey: string;
+  fileKey: string | null;
   createdAt: Date;
   updatedAt: Date;
+  categories: { id: string; name: string; slug: string }[];
   lessonsCount: number;
   chaptersCount: number;
   reviewAvg: number;
@@ -67,6 +68,10 @@ export async function getMyWishlistCourses({
             fileKey: true,
             createdAt: true,
             updatedAt: true,
+            categories: {
+              select: { id: true, name: true, slug: true },
+              orderBy: { name: "asc" },
+            },
             courseChapters: {
               select: {
                 lessons: { select: { id: true } },
@@ -109,6 +114,7 @@ export async function getMyWishlistCourses({
       fileKey: row.course.fileKey,
       createdAt: row.course.createdAt,
       updatedAt: row.course.updatedAt,
+      categories: row.course.categories,
       lessonsCount: row.course.courseChapters.reduce(
         (acc, chapter) => acc + chapter.lessons.length,
         0,

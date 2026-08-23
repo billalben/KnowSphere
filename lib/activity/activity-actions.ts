@@ -13,6 +13,7 @@ import {
   PencilIcon,
   StarIcon,
   StarOffIcon,
+  TagIcon,
 } from "lucide-react";
 
 import type { ActivityAction, ActivityEntityType } from "@/lib/generated/prisma/client";
@@ -44,6 +45,10 @@ export const ACTIVITY_PRESENTATION: Record<ActivityAction, ActivityPresentation>
 
   REVIEW_DELETED: { label: "deleted review", icon: StarOffIcon, tone: "destructive" },
   CONTACT_MESSAGE_DELETED: { label: "deleted contact message", icon: MailXIcon, tone: "destructive" },
+
+  CATEGORY_CREATED: { label: "created category", icon: FilePlusIcon, tone: "positive" },
+  CATEGORY_UPDATED: { label: "updated category", icon: PencilIcon, tone: "neutral" },
+  CATEGORY_DELETED: { label: "deleted category", icon: FileXIcon, tone: "destructive" },
 };
 
 export const ENTITY_PRESENTATION: Record<ActivityEntityType, { label: string; icon: LucideIcon }> = {
@@ -53,6 +58,7 @@ export const ENTITY_PRESENTATION: Record<ActivityEntityType, { label: string; ic
   QUIZ: { label: "Quiz", icon: HelpCircleIcon },
   REVIEW: { label: "Review", icon: StarIcon },
   CONTACT_MESSAGE: { label: "Contact message", icon: MessageCircleXIcon },
+  CATEGORY: { label: "Category", icon: TagIcon },
 };
 
 export const ENTITY_HREF_PREFIX: Record<ActivityEntityType, string | null> = {
@@ -62,4 +68,5 @@ export const ENTITY_HREF_PREFIX: Record<ActivityEntityType, string | null> = {
   QUIZ: "/admin/courses",
   REVIEW: "/admin/reviews",
   CONTACT_MESSAGE: "/admin/contact-messages",
+  CATEGORY: "/admin/categories",
 };

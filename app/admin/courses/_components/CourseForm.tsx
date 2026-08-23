@@ -42,6 +42,9 @@ import { useConfetti } from "@/hooks/use-confetti";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { tApiResponse } from "@/types/api";
+import type { tCategoryOption } from "@/app/data/admin/admin-get-category-options";
+
+import { CategoryMultiSelect } from "./CategoryMultiSelect";
 
 export type CourseFormProps = {
   initialValues?: Partial<CourseSchemaType>;
@@ -51,6 +54,7 @@ export type CourseFormProps = {
     | tApiResponse<unknown>
     | { status: "success" | "error"; message: string; data: unknown }
   >;
+  categoryOptions: tCategoryOption[];
   submitLabel?: string;
   pendingLabel?: string;
   successVerb?: string;
@@ -65,6 +69,7 @@ export type CourseFormProps = {
 export function CourseForm({
   initialValues,
   submitAction,
+  categoryOptions,
   submitLabel = "Create Course",
   pendingLabel = "Creating...",
   successVerb = "created",
@@ -90,7 +95,7 @@ export function CourseForm({
       level: ECourseLevel.BEGINNER,
       status: ECourseStatus.DRAFT,
       slug: "",
-      category: "",
+      categories: [],
       ...initialValues,
     },
   });
@@ -257,8 +262,8 @@ export function CourseForm({
             <Controller
               name="fileKey"
               control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
+              render={({ field }) => (
+                <Field>
                   <FieldLabel htmlFor="fileKey">Thumbnail</FieldLabel>
                   <Uploader
                     onUploadComplete={(key) => {
@@ -270,9 +275,6 @@ export function CourseForm({
                       Uploaded key: <strong>{field.value}</strong>
                     </FieldDescription>
                   )}
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
                 </Field>
               )}
             />
@@ -280,19 +282,19 @@ export function CourseForm({
             {/* Category + Level */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Controller
-                name="category"
+                name="categories"
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="category">Category</FieldLabel>
-                    <Input
-                      {...field}
-                      id="category"
-                      placeholder="e.g., Web Development"
-                      aria-invalid={fieldState.invalid}
+                    <FieldLabel htmlFor="categories">Categories</FieldLabel>
+                    <CategoryMultiSelect
+                      value={field.value ?? []}
+                      onChange={field.onChange}
+                      options={categoryOptions}
                     />
                     <FieldDescription>
-                      Course category (at least 3 characters)
+                      Pick existing categories or type to create a new one (up to
+                      10 per course)
                     </FieldDescription>
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
