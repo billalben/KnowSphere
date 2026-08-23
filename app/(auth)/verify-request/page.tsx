@@ -41,7 +41,7 @@ function VerifyEmailContent() {
             toast.success("Email verified successfully!");
             router.push("/");
           },
-          onError: (error) => {
+          onError: (error: { error: { message: string } }) => {
             console.error("Error verifying OTP:", error);
             toast.error(`Error verifying OTP: ${error.error.message}`);
           },
