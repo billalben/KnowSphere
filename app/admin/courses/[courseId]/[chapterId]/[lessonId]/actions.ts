@@ -13,6 +13,7 @@ import { requireAdmin } from "@/app/data/admin/require-admin";
 import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 import { request } from "@arcjet/next";
 import { revalidatePath } from "next/cache";
+import { adminLog } from "@/lib/activity/admin-log";
 
 const aj = arcjet
   .withRule(
@@ -73,6 +74,17 @@ export async function updateLesson(lessonId: string, values: LessonSchemaType) {
       },
     });
 
+    await adminLog({
+      action: "LESSON_UPDATED",
+      entityType: "LESSON",
+      entityId: lesson.id,
+      entityLabel: lesson.title,
+      metadata: {
+        courseId: validatedData.data.courseId,
+        chapterId: validatedData.data.chapterId,
+      },
+    });
+
     revalidatePath(
       `/admin/courses/${validatedData.data.courseId}/${validatedData.data.chapterId}/${lessonId}`,
     );
@@ -89,6 +101,7 @@ async function findLessonContext(lessonId: string) {
     where: { id: lessonId },
     select: {
       id: true,
+      title: true,
       chapterId: true,
       chapter: {
         select: {
@@ -105,6 +118,7 @@ async function findLessonContext(lessonId: string) {
   return {
     courseId: lesson.chapter.courseId,
     chapterId: lesson.chapterId,
+    lessonTitle: lesson.title,
   };
 }
 
@@ -139,6 +153,12 @@ export async function upsertLessonQuiz(
     }
 
     const { questions } = parsed.data;
+
+    const existingQuiz = await prisma.quiz.findUnique({
+      where: { lessonId },
+      select: { id: true },
+    });
+    const wasCreated = !existingQuiz;
 
     await prisma.$transaction(async (tx) => {
       const quiz = await tx.quiz.upsert({
@@ -176,6 +196,24 @@ export async function upsertLessonQuiz(
           },
         });
       }
+
+      await adminLog(
+        {
+          action: wasCreated ? "QUIZ_CREATED" : "QUIZ_UPDATED",
+          entityType: "QUIZ",
+          entityId: quiz.id,
+          entityLabel: ctx.lessonTitle
+            ? `Quiz: ${ctx.lessonTitle}`
+            : null,
+          metadata: {
+            courseId: ctx.courseId,
+            chapterId: ctx.chapterId,
+            lessonId,
+            questionsCount: questions.length,
+          },
+        },
+        tx,
+      );
     });
 
     revalidatePath(

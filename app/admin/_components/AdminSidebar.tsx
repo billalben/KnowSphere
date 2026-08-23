@@ -10,6 +10,7 @@ import {
   LayoutDashboardIcon,
   BookCheckIcon,
   FolderIcon,
+  HistoryIcon,
   MessageCircleIcon,
   MessageCircleQuestionMarkIcon,
   StarIcon,
@@ -59,6 +60,11 @@ export function AdminSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       title: "Projects",
       url: "/admin/projects",
       icon: <FolderIcon size={16} />,
+    },
+    {
+      title: "Activity",
+      url: "/admin/activity",
+      icon: <HistoryIcon size={16} />,
     },
     {
       title: "Messages",

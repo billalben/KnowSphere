@@ -34,6 +34,8 @@ model User {
   wishlistItems   WishlistItem[]
   certificates    Certificate[]
 
+  activities Activity[]
+
   stripeCustomerId String? @unique
 
   showCertificatesPublicly Boolean @default(true)
@@ -45,6 +47,59 @@ model User {
 
   @@unique([email])
   @@map("user")
+}
+
+enum ActorType {
+  ADMIN
+  SYSTEM
+}
+
+enum ActivityAction {
+  COURSE_CREATED
+  COURSE_UPDATED
+  COURSE_STATUS_CHANGED
+  COURSE_DELETED
+  CHAPTER_CREATED
+  CHAPTER_UPDATED
+  CHAPTER_DELETED
+  LESSON_CREATED
+  LESSON_UPDATED
+  LESSON_DELETED
+  QUIZ_CREATED
+  QUIZ_UPDATED
+  REVIEW_DELETED
+  CONTACT_MESSAGE_DELETED
+}
+
+enum ActivityEntityType {
+  COURSE
+  CHAPTER
+  LESSON
+  QUIZ
+  REVIEW
+  CONTACT_MESSAGE
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  actorType ActorType
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actorNameSnapshot String?
+
+  action     ActivityAction
+  entityType ActivityEntityType
+  entityId   String?
+  entityLabel String?
+  metadata   Json?
+
+  @@index([createdAt])
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId, createdAt])
+  @@index([action, createdAt])
+  @@map("activity")
 }
 
 model Session {

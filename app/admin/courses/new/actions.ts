@@ -8,6 +8,7 @@ import { requireAdmin } from "@/app/data/admin/require-admin";
 import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 import { request } from "@arcjet/next";
 import { stripe } from "@/lib/stripe";
+import { adminLog } from "@/lib/activity/admin-log";
 
 const aj = arcjet
   .withRule(
@@ -62,6 +63,14 @@ export async function createCourse(values: CourseSchemaType) {
         userId: session.user.id,
         stripePriceId: String(data.default_price),
       },
+    });
+
+    await adminLog({
+      action: "COURSE_CREATED",
+      entityType: "COURSE",
+      entityId: course.id,
+      entityLabel: course.title,
+      metadata: { status: course.status, level: course.level, price: course.price },
     });
 
     return successResponse("Course created successfully", course);

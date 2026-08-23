@@ -6,6 +6,7 @@ import { requireAdmin } from "@/app/data/admin/require-admin";
 import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 import { request } from "@arcjet/next";
 import { revalidatePath } from "next/cache";
+import { adminLog } from "@/lib/activity/admin-log";
 
 const aj = arcjet
   .withRule(
@@ -37,7 +38,7 @@ export async function deleteCourse({ courseId }: { courseId: string }) {
 
     const course = await prisma.course.findUnique({
       where: { id: courseId },
-      select: { id: true },
+      select: { id: true, title: true, slug: true },
     });
 
     if (!course) {
@@ -48,6 +49,14 @@ export async function deleteCourse({ courseId }: { courseId: string }) {
     // the course removes its chapters and lessons in the same transaction.
     await prisma.course.delete({
       where: { id: courseId },
+    });
+
+    await adminLog({
+      action: "COURSE_DELETED",
+      entityType: "COURSE",
+      entityId: course.id,
+      entityLabel: course.title,
+      metadata: { slug: course.slug },
     });
 
     revalidatePath("/admin/courses");

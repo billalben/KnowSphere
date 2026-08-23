@@ -7,6 +7,7 @@ import { errorResponse, successResponse } from "@/lib/responses";
 import { requireAdmin } from "@/app/data/admin/require-admin";
 import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 import { request } from "@arcjet/next";
+import { adminLog } from "@/lib/activity/admin-log";
 
 const aj = arcjet
   .withRule(
@@ -42,7 +43,7 @@ export async function deleteContactMessage({
 
     const message = await prisma.contactMessage.findUnique({
       where: { id: messageId },
-      select: { id: true },
+      select: { id: true, name: true, email: true },
     });
 
     if (!message) {
@@ -51,6 +52,13 @@ export async function deleteContactMessage({
 
     await prisma.contactMessage.delete({
       where: { id: messageId },
+    });
+
+    await adminLog({
+      action: "CONTACT_MESSAGE_DELETED",
+      entityType: "CONTACT_MESSAGE",
+      entityId: message.id,
+      entityLabel: `${message.name} <${message.email}>`,
     });
 
     revalidatePath("/admin/contact-messages");

@@ -15,6 +15,7 @@ import { requireAdmin } from "@/app/data/admin/require-admin";
 import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 import { request } from "@arcjet/next";
 import { revalidatePath } from "next/cache";
+import { adminLog } from "@/lib/activity/admin-log";
 
 const aj = arcjet
   .withRule(
@@ -50,10 +51,49 @@ export async function updateCourse(courseId: string, values: CourseSchemaType) {
       return errorResponse("Invalid data", z.treeifyError(validatedData.error));
     }
 
+    const before = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: { title: true, status: true, price: true, level: true, slug: true },
+    });
+
     const course = await prisma.course.update({
       where: { id: courseId },
       data: validatedData.data,
     });
+
+    if (before) {
+      const statusChanged = before.status !== course.status;
+      const changedFields: Record<string, { from: unknown; to: unknown }> = {};
+      if (before.price !== course.price)
+        changedFields.price = { from: before.price, to: course.price };
+      if (before.level !== course.level)
+        changedFields.level = { from: before.level, to: course.level };
+
+      if (statusChanged) {
+        await adminLog({
+          action: "COURSE_STATUS_CHANGED",
+          entityType: "COURSE",
+          entityId: course.id,
+          entityLabel: course.title,
+          metadata: {
+            from: before.status,
+            to: course.status,
+            ...(Object.keys(changedFields).length > 0 ? { fields: changedFields } : {}),
+          },
+        });
+      } else {
+        await adminLog({
+          action: "COURSE_UPDATED",
+          entityType: "COURSE",
+          entityId: course.id,
+          entityLabel: course.title,
+          metadata:
+            Object.keys(changedFields).length > 0
+              ? { fields: changedFields }
+              : null,
+        });
+      }
+    }
 
     return successResponse("Course updated successfully", course);
   } catch {
@@ -170,13 +210,28 @@ export async function createChapter(values: ChapterSchemaType) {
         orderBy: { position: "desc" },
       });
 
-      await tx.courseChapter.create({
+      const created = await tx.courseChapter.create({
         data: {
           title: validatedData.data.name,
           position: (maxPosition?.position ?? 0) + 1,
           courseId: validatedData.data.courseId,
         },
+        select: { id: true, title: true },
       });
+
+      await adminLog(
+        {
+          action: "CHAPTER_CREATED",
+          entityType: "CHAPTER",
+          entityId: created.id,
+          entityLabel: created.title,
+          metadata: {
+            courseId: validatedData.data.courseId,
+            position: (maxPosition?.position ?? 0) + 1,
+          },
+        },
+        tx,
+      );
     });
 
     revalidatePath(`/admin/courses/${validatedData.data.courseId}/edit`);
@@ -204,7 +259,7 @@ export async function createLesson(values: LessonSchemaType) {
         orderBy: { position: "desc" },
       });
 
-      await tx.lesson.create({
+      const created = await tx.lesson.create({
         data: {
           title: validatedData.data.name,
           description: validatedData.data.description,
@@ -213,7 +268,22 @@ export async function createLesson(values: LessonSchemaType) {
           position: (maxPosition?.position ?? 0) + 1,
           chapterId: validatedData.data.chapterId,
         },
+        select: { id: true, title: true },
       });
+
+      await adminLog(
+        {
+          action: "LESSON_CREATED",
+          entityType: "LESSON",
+          entityId: created.id,
+          entityLabel: created.title,
+          metadata: {
+            courseId: validatedData.data.courseId,
+            chapterId: validatedData.data.chapterId,
+          },
+        },
+        tx,
+      );
     });
 
     revalidatePath(`/admin/courses/${validatedData.data.courseId}/edit`);
@@ -241,7 +311,7 @@ export async function deleteLesson({
       select: {
         lessons: {
           orderBy: { position: "asc" },
-          select: { id: true, position: true },
+          select: { id: true, position: true, title: true },
         },
       },
     });
@@ -267,24 +337,38 @@ export async function deleteLesson({
     // move remaining lessons to temporary negative positions, delete the target,
     // then set final positions. Order matters — the deleted lesson keeps its
     // position until the delete runs, so direct repositioning would clash.
-    const tempUpdates = remainingLessons.map((lesson, index) =>
-      prisma.lesson.update({
-        where: { id: lesson.id },
-        data: { position: -(index + 1) },
-      }),
-    );
-    const finalUpdates = remainingLessons.map((lesson, index) =>
-      prisma.lesson.update({
-        where: { id: lesson.id },
-        data: { position: index + 1 },
-      }),
-    );
+    await prisma.$transaction(async (tx) => {
+      await Promise.all(
+        remainingLessons.map((lesson, index) =>
+          tx.lesson.update({
+            where: { id: lesson.id },
+            data: { position: -(index + 1) },
+          }),
+        ),
+      );
 
-    await prisma.$transaction([
-      ...tempUpdates,
-      prisma.lesson.delete({ where: { id: lessonId } }),
-      ...finalUpdates,
-    ]);
+      await tx.lesson.delete({ where: { id: lessonId } });
+
+      await Promise.all(
+        remainingLessons.map((lesson, index) =>
+          tx.lesson.update({
+            where: { id: lesson.id },
+            data: { position: index + 1 },
+          }),
+        ),
+      );
+
+      await adminLog(
+        {
+          action: "LESSON_DELETED",
+          entityType: "LESSON",
+          entityId: lessonId,
+          entityLabel: lessonToDelete.title,
+          metadata: { courseId, chapterId },
+        },
+        tx,
+      );
+    });
 
     revalidatePath(`/admin/courses/${courseId}/edit`);
 
@@ -309,7 +393,7 @@ export async function deleteChapter({
       select: {
         courseChapters: {
           orderBy: { position: "asc" },
-          select: { id: true, position: true },
+          select: { id: true, position: true, title: true },
         },
       },
     });
@@ -340,24 +424,38 @@ export async function deleteChapter({
     // target, then set final positions. Without temp moves, sequential updates
     // would clash with the not-yet-deleted chapter's position (and with each
     // other mid-transaction), throwing inside $transaction.
-    const tempUpdates = remainingChapters.map((chapter, index) =>
-      prisma.courseChapter.update({
-        where: { id: chapter.id },
-        data: { position: -(index + 1) },
-      }),
-    );
-    const finalUpdates = remainingChapters.map((chapter, index) =>
-      prisma.courseChapter.update({
-        where: { id: chapter.id },
-        data: { position: index + 1 },
-      }),
-    );
+    await prisma.$transaction(async (tx) => {
+      await Promise.all(
+        remainingChapters.map((chapter, index) =>
+          tx.courseChapter.update({
+            where: { id: chapter.id },
+            data: { position: -(index + 1) },
+          }),
+        ),
+      );
 
-    await prisma.$transaction([
-      ...tempUpdates,
-      prisma.courseChapter.delete({ where: { id: chapterId } }),
-      ...finalUpdates,
-    ]);
+      await tx.courseChapter.delete({ where: { id: chapterId } });
+
+      await Promise.all(
+        remainingChapters.map((chapter, index) =>
+          tx.courseChapter.update({
+            where: { id: chapter.id },
+            data: { position: index + 1 },
+          }),
+        ),
+      );
+
+      await adminLog(
+        {
+          action: "CHAPTER_DELETED",
+          entityType: "CHAPTER",
+          entityId: chapterId,
+          entityLabel: chapterToDelete.title,
+          metadata: { courseId },
+        },
+        tx,
+      );
+    });
 
     revalidatePath(`/admin/courses/${courseId}/edit`);
 

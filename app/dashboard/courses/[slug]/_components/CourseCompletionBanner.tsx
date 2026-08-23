@@ -59,6 +59,7 @@ export function CourseCompletionBanner({
         </div>
         <Button
           size="sm"
+          nativeButton={false}
           render={
             <Link
               href={`/certificates/${certificate.verificationCode}`}
