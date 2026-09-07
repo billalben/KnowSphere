@@ -8,6 +8,10 @@ import { request } from "@arcjet/next";
 import { errorResponse, successResponse } from "@/lib/responses";
 import { requireAdmin } from "@/app/data/admin/require-admin";
 import { adminLog } from "@/lib/activity/admin-log";
+import {
+  buildCategoryFieldChanges,
+  snapshotCategory,
+} from "@/lib/activity/snapshots/category";
 import { formatSlug } from "@/lib/formatSlug";
 import { categoryNameSchema } from "@/lib/zodSchemas";
 import { MAX_CATEGORIES } from "@/lib/constants/categories";
@@ -172,13 +176,22 @@ export async function updateCategoryAction({
       data: { name: trimmed, slug: nextSlug },
     });
 
-    await adminLog({
-      action: "CATEGORY_UPDATED",
-      entityType: "CATEGORY",
-      entityId: category.id,
-      entityLabel: category.name,
-      metadata: { from: before.name, to: category.name },
-    });
+    const beforeSnapshot = snapshotCategory(before);
+    const afterSnapshot = snapshotCategory(category);
+    const changedFields = buildCategoryFieldChanges(
+      beforeSnapshot,
+      afterSnapshot,
+    );
+
+    if (Object.keys(changedFields).length > 0) {
+      await adminLog({
+        action: "CATEGORY_UPDATED",
+        entityType: "CATEGORY",
+        entityId: category.id,
+        entityLabel: category.name,
+        metadata: { fields: changedFields },
+      });
+    }
 
     revalidatePath("/admin/categories");
     revalidatePath("/admin/courses");

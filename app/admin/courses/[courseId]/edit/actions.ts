@@ -16,6 +16,10 @@ import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 import { request } from "@arcjet/next";
 import { revalidatePath } from "next/cache";
 import { adminLog } from "@/lib/activity/admin-log";
+import {
+  buildCourseFieldChanges,
+  snapshotCourse,
+} from "@/lib/activity/snapshots/course";
 import { deleteObject } from "@/lib/s3/discard-upload";
 import {
   CATEGORY_LIMIT_EXCEEDED,
@@ -61,20 +65,26 @@ export async function updateCourse(courseId: string, values: CourseSchemaType) {
     const before = await prisma.course.findUnique({
       where: { id: courseId },
       select: {
+        id: true,
         title: true,
-        status: true,
-        price: true,
-        level: true,
         slug: true,
+        description: true,
+        smallDesc: true,
+        price: true,
+        duration: true,
+        level: true,
+        status: true,
         fileKey: true,
-        categories: { select: { id: true, name: true }, orderBy: { name: "asc" } },
+        categories: { select: { name: true }, orderBy: { name: "asc" } },
       },
     });
 
     let course;
+    let resolvedCategoryNames: string[] = [];
     try {
       course = await prisma.$transaction(async (tx) => {
         const categories = await resolveCategories(categoryNames, tx);
+        resolvedCategoryNames = categories.map((c) => c.name);
 
         const updated = await tx.course.update({
           where: { id: courseId },
@@ -111,20 +121,17 @@ export async function updateCourse(courseId: string, values: CourseSchemaType) {
     }
 
     if (before) {
-      const statusChanged = before.status !== course.status;
-      const changedFields: Record<string, { from: unknown; to: unknown }> = {};
-      if (before.price !== course.price)
-        changedFields.price = { from: before.price, to: course.price };
-      if (before.level !== course.level)
-        changedFields.level = { from: before.level, to: course.level };
+      const beforeSnapshot = snapshotCourse({
+        ...before,
+        categories: before.categories,
+      });
+      const afterSnapshot = snapshotCourse({
+        ...course,
+        categories: resolvedCategoryNames.map((name) => ({ name })),
+      });
 
-      const beforeNames = before.categories.map((c) => c.name);
-      const categoriesChanged =
-        beforeNames.length !== categoryNames.length ||
-        beforeNames.some((name, idx) => name !== categoryNames[idx]);
-      if (categoriesChanged) {
-        changedFields.categories = { from: beforeNames, to: categoryNames };
-      }
+      const statusChanged = beforeSnapshot.status !== afterSnapshot.status;
+      const changedFields = buildCourseFieldChanges(beforeSnapshot, afterSnapshot);
 
       if (statusChanged) {
         await adminLog({
@@ -133,21 +140,20 @@ export async function updateCourse(courseId: string, values: CourseSchemaType) {
           entityId: course.id,
           entityLabel: course.title,
           metadata: {
-            from: before.status,
-            to: course.status,
-            ...(Object.keys(changedFields).length > 0 ? { fields: changedFields } : {}),
+            from: beforeSnapshot.status,
+            to: afterSnapshot.status,
+            ...(Object.keys(changedFields).length > 0
+              ? { fields: changedFields }
+              : {}),
           },
         });
-      } else {
+      } else if (Object.keys(changedFields).length > 0) {
         await adminLog({
           action: "COURSE_UPDATED",
           entityType: "COURSE",
           entityId: course.id,
           entityLabel: course.title,
-          metadata:
-            Object.keys(changedFields).length > 0
-              ? { fields: changedFields }
-              : null,
+          metadata: { fields: changedFields },
         });
       }
     }

@@ -14,6 +14,14 @@ import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 import { request } from "@arcjet/next";
 import { revalidatePath } from "next/cache";
 import { adminLog } from "@/lib/activity/admin-log";
+import {
+  buildLessonFieldChanges,
+  snapshotLesson,
+} from "@/lib/activity/snapshots/lesson";
+import {
+  buildQuizFieldChanges,
+  snapshotQuiz,
+} from "@/lib/activity/snapshots/quiz";
 
 const aj = arcjet
   .withRule(
@@ -64,6 +72,21 @@ export async function updateLesson(lessonId: string, values: LessonSchemaType) {
       return errorResponse("Invalid data", z.treeifyError(validatedData.error));
     }
 
+    const before = await prisma.lesson.findUnique({
+      where: { id: lessonId },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        position: true,
+        videoKey: true,
+      },
+    });
+
+    if (!before) {
+      return errorResponse("Lesson not found", null);
+    }
+
     const lesson = await prisma.lesson.update({
       where: { id: lessonId },
       data: {
@@ -79,16 +102,26 @@ export async function updateLesson(lessonId: string, values: LessonSchemaType) {
         .catch(() => {});
     }
 
-    await adminLog({
-      action: "LESSON_UPDATED",
-      entityType: "LESSON",
-      entityId: lesson.id,
-      entityLabel: lesson.title,
-      metadata: {
-        courseId: validatedData.data.courseId,
-        chapterId: validatedData.data.chapterId,
-      },
-    });
+    const beforeSnapshot = snapshotLesson(before);
+    const afterSnapshot = snapshotLesson(lesson);
+    const changedFields = buildLessonFieldChanges(
+      beforeSnapshot,
+      afterSnapshot,
+    );
+
+    if (Object.keys(changedFields).length > 0) {
+      await adminLog({
+        action: "LESSON_UPDATED",
+        entityType: "LESSON",
+        entityId: lesson.id,
+        entityLabel: lesson.title,
+        metadata: {
+          courseId: validatedData.data.courseId,
+          chapterId: validatedData.data.chapterId,
+          fields: changedFields,
+        },
+      });
+    }
 
     revalidatePath(
       `/admin/courses/${validatedData.data.courseId}/${validatedData.data.chapterId}/${lessonId}`,
@@ -161,9 +194,16 @@ export async function upsertLessonQuiz(
 
     const existingQuiz = await prisma.quiz.findUnique({
       where: { lessonId },
-      select: { id: true },
+      select: {
+        id: true,
+        questions: { select: { type: true } },
+      },
     });
     const wasCreated = !existingQuiz;
+
+    const beforeSnapshot = existingQuiz
+      ? snapshotQuiz(existingQuiz)
+      : null;
 
     await prisma.$transaction(async (tx) => {
       const quiz = await tx.quiz.upsert({
@@ -202,6 +242,14 @@ export async function upsertLessonQuiz(
         });
       }
 
+      const afterSnapshot = snapshotQuiz({
+        id: quiz.id,
+        questions: questions.map((q) => ({ type: q.type })),
+      });
+      const changedFields = beforeSnapshot
+        ? buildQuizFieldChanges(beforeSnapshot, afterSnapshot)
+        : { questionsCount: { from: 0, to: afterSnapshot.questionsCount } };
+
       await adminLog(
         {
           action: wasCreated ? "QUIZ_CREATED" : "QUIZ_UPDATED",
@@ -214,7 +262,8 @@ export async function upsertLessonQuiz(
             courseId: ctx.courseId,
             chapterId: ctx.chapterId,
             lessonId,
-            questionsCount: questions.length,
+            fields: changedFields,
+            ...(wasCreated ? { questionsCount: questions.length } : {}),
           },
         },
         tx,

@@ -8,7 +8,11 @@ import {
   adminGetActivities,
   type tActivityItem,
 } from "@/app/data/admin/admin-get-activities";
-import { parseActionParam, parseEntityParam } from "@/app/admin/activity/_lib/filters";
+import {
+  parseActionParam,
+  parseEntityIdParam,
+  parseEntityParam,
+} from "@/app/admin/activity/_lib/filters";
 
 const MAX_EXPORT = 5000;
 
@@ -38,10 +42,13 @@ export async function GET(request: NextRequest) {
   }
 
   const params = request.nextUrl.searchParams;
+  const entityType = parseEntityParam(params.get("entityType") ?? undefined);
+  const entityId = parseEntityIdParam(params.get("entityId") ?? undefined);
   const page = await adminGetActivities({
     actorId: params.get("actorId") || null,
     action: parseActionParam(params.get("action") ?? undefined),
-    entityType: parseEntityParam(params.get("entityType") ?? undefined),
+    entityType,
+    entityId: entityType ? entityId : null,
     from: parseDateParam(params.get("from")),
     to: parseDateParam(params.get("to")),
     take: MAX_EXPORT,

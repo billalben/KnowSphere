@@ -3,6 +3,7 @@ import { HistoryIcon } from "lucide-react";
 import { EmptyState } from "@/components/general/EmptyState";
 import {
   adminGetActivities,
+  serializeLiveness,
   type tActivityItem,
 } from "@/app/data/admin/admin-get-activities";
 
@@ -12,6 +13,7 @@ type FilterParams = {
   actorId: string;
   action: string;
   entityType: string;
+  entityId: string;
   from: number | null;
   to: number | null;
 };
@@ -21,6 +23,7 @@ type Props = {
     actorId: string | null;
     action: tActivityItem["action"] | null;
     entityType: tActivityItem["entityType"] | null;
+    entityId: string | null;
     from: Date | null;
     to: Date | null;
     take: number;
@@ -47,9 +50,11 @@ export async function ActivityList({ filters, filterParams }: Props) {
       key={stableKey(filterParams)}
       initialItems={page.items}
       initialCursor={page.nextCursor}
+      initialLiveness={serializeLiveness(page.liveness)}
       actorId={filterParams.actorId}
       action={(filterParams.action as never) ?? "all"}
       entityType={(filterParams.entityType as never) ?? "all"}
+      entityId={filterParams.entityId}
       from={filterParams.from}
       to={filterParams.to}
     />
@@ -57,5 +62,5 @@ export async function ActivityList({ filters, filterParams }: Props) {
 }
 
 function stableKey(params: FilterParams): string {
-  return `${params.actorId}|${params.action}|${params.entityType}|${params.from ?? ""}|${params.to ?? ""}`;
+  return `${params.actorId}|${params.action}|${params.entityType}|${params.entityId}|${params.from ?? ""}|${params.to ?? ""}`;
 }

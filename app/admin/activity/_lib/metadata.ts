@@ -1,10 +1,37 @@
 import { Prisma } from "@/lib/generated/prisma/client";
 
-import type { tActivityItem } from "@/app/data/admin/admin-get-activities";
+import type {
+  SerializedLiveness,
+  tActivityItem,
+} from "@/app/data/admin/admin-get-activities";
 import { ENTITY_HREF_PREFIX } from "@/lib/activity/activity-actions";
 
-export function entityHref(item: tActivityItem): string | null {
+/**
+ * True when the entity the activity row references still exists in the
+ * database. Rows pointing at deleted entities render with a "Deleted" badge
+ * and no link to avoid dangling navigation.
+ *
+ * Rows whose `entityType` has no per-row destination (CONTACT_MESSAGE,
+ * CATEGORY) intentionally return `false` from `entityHref` already, so we
+ * only need to check liveness for the families where it matters.
+ */
+export function isEntityDeleted(
+  item: tActivityItem,
+  liveness: SerializedLiveness,
+): boolean {
+  if (!item.entityId) return false;
+  const alive = liveness[item.entityType];
+  if (!alive) return false;
+  return !alive.includes(item.entityId);
+}
+
+export function entityHref(
+  item: tActivityItem,
+  liveness?: SerializedLiveness,
+): string | null {
   if (!item.entityId) return null;
+
+  if (liveness && isEntityDeleted(item, liveness)) return null;
 
   const prefix = ENTITY_HREF_PREFIX[item.entityType];
   if (!prefix) return null;

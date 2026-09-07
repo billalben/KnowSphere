@@ -19,6 +19,9 @@ export const ACTIVITY_ACTIONS = [
   "QUIZ_UPDATED",
   "REVIEW_DELETED",
   "CONTACT_MESSAGE_DELETED",
+  "CATEGORY_CREATED",
+  "CATEGORY_UPDATED",
+  "CATEGORY_DELETED",
 ] as const;
 
 export const ENTITY_TYPES = [
@@ -29,6 +32,7 @@ export const ENTITY_TYPES = [
   "QUIZ",
   "REVIEW",
   "CONTACT_MESSAGE",
+  "CATEGORY",
 ] as const;
 
 export type ActionFilter = (typeof ACTIVITY_ACTIONS)[number];
@@ -50,4 +54,10 @@ export function parseEntityParam(
   return (ENTITY_TYPES as readonly string[]).includes(value)
     ? (value as ActivityEntityType)
     : null;
+}
+
+export function parseEntityIdParam(value: string | undefined): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? null : trimmed;
 }

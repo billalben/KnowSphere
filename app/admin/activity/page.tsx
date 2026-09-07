@@ -7,12 +7,17 @@ import {
 import { ActivityFilters } from "./_components/ActivityFilters";
 import { ActivityList } from "./_components/ActivityList";
 import { ActivityListSkeleton } from "./_components/ActivityListSkeleton";
-import { parseActionParam, parseEntityParam } from "./_lib/filters";
+import {
+  parseActionParam,
+  parseEntityIdParam,
+  parseEntityParam,
+} from "./_lib/filters";
 
 type SearchParams = Promise<{
   actorId?: string;
   action?: string;
   entityType?: string;
+  entityId?: string;
   from?: string;
   to?: string;
 }>;
@@ -33,10 +38,14 @@ export default async function ActivityPage({
 
   const filterOptions = await adminGetActivityFilterOptions();
 
+  const entityType = parseEntityParam(sp.entityType);
+  const entityId = parseEntityIdParam(sp.entityId);
+
   const filters = {
     actorId: sp.actorId || null,
     action: parseActionParam(sp.action),
-    entityType: parseEntityParam(sp.entityType),
+    entityType,
+    entityId: entityType ? entityId : null,
     from: parseDate(sp.from),
     to: parseDate(sp.to),
     take: 20,
@@ -48,7 +57,14 @@ export default async function ActivityPage({
         <h1 className="text-2xl font-bold">Activity</h1>
       </div>
 
-      <ActivityFilters filterOptions={filterOptions} />
+      <ActivityFilters
+        filterOptions={filterOptions}
+        entityFilterContext={
+          entityType && entityId
+            ? { entityType, entityId }
+            : null
+        }
+      />
 
       <Suspense fallback={<ActivityListSkeleton />}>
         <ActivityList
@@ -57,6 +73,7 @@ export default async function ActivityPage({
             actorId: sp.actorId ?? "",
             action: sp.action ?? "all",
             entityType: sp.entityType ?? "all",
+            entityId: entityId ?? "",
             from: parseDate(sp.from)?.getTime() ?? null,
             to: parseDate(sp.to)?.getTime() ?? null,
           }}
