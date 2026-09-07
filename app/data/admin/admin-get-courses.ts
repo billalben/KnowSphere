@@ -1,6 +1,7 @@
 import "server-only";
 
 import prisma from "@/lib/prisma";
+import { getDownloadUrls } from "@/lib/s3/get-download-url";
 import { requireAdmin } from "./require-admin";
 
 export async function adminGetCourses() {
@@ -29,7 +30,12 @@ export async function adminGetCourses() {
     },
   });
 
-  return courses;
+  const imageUrls = await getDownloadUrls(courses.map((c) => c.fileKey));
+
+  return courses.map((course, i) => ({
+    ...course,
+    imageUrl: imageUrls[i],
+  }));
 }
 
 export type tAdminCourse = Awaited<ReturnType<typeof adminGetCourses>>[number];

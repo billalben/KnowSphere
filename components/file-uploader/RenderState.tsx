@@ -66,7 +66,11 @@ export function RenderImageState({
   handleRemoveFile: () => void;
 }) {
   return (
-    <div className="relative w-full h-full">
+    <div
+      className="relative w-full h-full"
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+    >
       <Image
         src={objectUrl}
         alt="Uploaded Image"
@@ -103,7 +107,11 @@ export function RenderVideoState({
   handleRemoveFile: () => void;
 }) {
   return (
-    <div className="relative w-full h-full">
+    <div
+      className="relative w-full h-full"
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+    >
       <video
         src={objectUrl}
         controls

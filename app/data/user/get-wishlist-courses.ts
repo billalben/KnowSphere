@@ -1,6 +1,7 @@
 import "server-only";
 
 import prisma from "@/lib/prisma";
+import { getDownloadUrls } from "@/lib/s3/get-download-url";
 
 import { requireUser } from "./require-user";
 
@@ -13,7 +14,7 @@ export type tWishlistCourse = {
   level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   price: number;
-  fileKey: string | null;
+  imageUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
   categories: { id: string; name: string; slug: string }[];
@@ -94,7 +95,9 @@ export async function getMyWishlistCourses({
     }),
   ]);
 
-  const items: tWishlistCourse[] = rows.map((row) => {
+  const imageUrls = await getDownloadUrls(rows.map((r) => r.course.fileKey));
+
+  const items: tWishlistCourse[] = rows.map((row, i) => {
     const ratings = row.course.courseReviews;
     const reviewCount = ratings.length;
     const reviewAvg =
@@ -111,7 +114,7 @@ export async function getMyWishlistCourses({
       level: row.course.level,
       status: row.course.status,
       price: row.course.price,
-      fileKey: row.course.fileKey,
+      imageUrl: imageUrls[i],
       createdAt: row.course.createdAt,
       updatedAt: row.course.updatedAt,
       categories: row.course.categories,

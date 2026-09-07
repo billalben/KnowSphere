@@ -32,7 +32,7 @@ export default async function CourseLearnOverviewPage({ params }: PageParams) {
         slug={course.slug}
         title={course.title}
         smallDesc={course.smallDesc}
-        fileKey={course.fileKey}
+        imageUrl={course.imageUrl}
         resumeLessonId={resumeLessonId}
         hasStarted={completedCount > 0}
       />

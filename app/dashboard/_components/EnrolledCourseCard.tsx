@@ -37,7 +37,7 @@ export function EnrolledCourseCard({ course }: EnrolledCourseCardProps) {
     <Card className="group flex flex-col overflow-hidden pt-0">
       <div className="relative aspect-video w-full overflow-hidden bg-muted">
         <CourseImage
-          fileKey={course.fileKey}
+          imageUrl={course.imageUrl}
           alt={course.title}
           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
           imageClassName="transition-transform duration-500 group-hover:scale-105"

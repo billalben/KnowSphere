@@ -49,7 +49,7 @@ export default async function LessonPlayerPage({ params }: PageParams) {
   return (
     <div className="space-y-6">
       <LessonVideo
-        videoKey={currentLesson.videoKey}
+        videoUrl={currentLesson.videoUrl}
         title={currentLesson.title}
       />
 

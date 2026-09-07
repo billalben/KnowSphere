@@ -1,9 +1,9 @@
-import { env } from "@/lib/env";
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { S3Client } from "@/lib/S3Client";
 import { NextResponse } from "next/server";
+import z from "zod";
+
 import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 import { requireAdmin } from "@/app/data/admin/require-admin";
+import { discardUpload } from "@/lib/s3/discard-upload";
 
 const aj = arcjet
   .withRule(
@@ -20,6 +20,10 @@ const aj = arcjet
     }),
   );
 
+const deleteSchema = z.object({
+  key: z.string().min(1),
+});
+
 export async function DELETE(request: Request) {
   const session = await requireAdmin();
 
@@ -33,21 +37,20 @@ export async function DELETE(request: Request) {
     }
 
     const body = await request.json();
+    const parsed = deleteSchema.safeParse(body);
 
-    const { key } = body;
-    if (!key) {
-      return NextResponse.json({ error: "Key is required" }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid body" }, { status: 400 });
     }
 
-    const command = new DeleteObjectCommand({
-      Bucket: env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES,
-      Key: key,
-    });
+    const result = await discardUpload(parsed.data.key, session.user.id);
 
-    await S3Client.send(command);
+    if (result === "not-owned") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     return NextResponse.json(
-      { message: "File deleted successfully" },
+      { message: "File deleted successfully", result },
       { status: 200 },
     );
   } catch {

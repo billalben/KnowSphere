@@ -47,7 +47,6 @@ export function LessonForm({ data, courseId, chapterId }: iAppProps) {
       name: data.title,
       description: data.description ?? "",
       videoKey: data.videoKey ?? "",
-      thumbnailKey: data.thumbnailKey ?? "",
       courseId,
       chapterId,
     },
@@ -128,48 +127,24 @@ export function LessonForm({ data, courseId, chapterId }: iAppProps) {
               )}
             />
 
-            {/* Thumbnail */}
-            <Controller
-              name="thumbnailKey"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="thumbnailKey">Thumbnail</FieldLabel>
-                  <Uploader
-                    onUploadComplete={(key) => {
-                      field.onChange(key);
-                    }}
-                  />
-                  {field.value && (
-                    <FieldDescription>
-                      Uploaded thumbnail key: <strong>{field.value}</strong>
-                    </FieldDescription>
-                  )}
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-
             {/* Video */}
             <Controller
               name="videoKey"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="videoKey">Video</FieldLabel>
+                  <FieldLabel htmlFor="videoKey">
+                    Video{" "}
+                    <span className="text-muted-foreground font-normal">
+                      (Optional)
+                    </span>
+                  </FieldLabel>
                   <Uploader
                     fileType="video"
                     onUploadComplete={(key) => {
                       field.onChange(key);
                     }}
                   />
-                  {field.value && (
-                    <FieldDescription>
-                      Uploaded video key: <strong>{field.value}</strong>
-                    </FieldDescription>
-                  )}
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
                   )}

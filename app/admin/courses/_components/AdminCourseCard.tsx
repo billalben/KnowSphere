@@ -44,7 +44,7 @@ export function AdminCourseCard({ course }: iAppProps) {
     <div className="group relative flex flex-col overflow-hidden rounded-xl bg-card text-card-foreground shadow-xs border border-border transition-shadow hover:shadow-lg">
       <div className="relative aspect-video w-full overflow-hidden bg-muted">
         <CourseImage
-          fileKey={course.fileKey}
+          imageUrl={course.imageUrl}
           alt={course.title}
           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
           imageClassName="transition-transform duration-500 group-hover:scale-105"
@@ -59,7 +59,7 @@ export function AdminCourseCard({ course }: iAppProps) {
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="flex items-start justify-between gap-2">
           <Link
-            href={`/admin/courses/${course.id}`}
+            href={`/admin/courses/${course.id}/edit`}
             className="line-clamp-1 text-sm font-semibold leading-snug hover:underline underline-offset-4"
           >
             {course.title}
@@ -76,12 +76,6 @@ export function AdminCourseCard({ course }: iAppProps) {
               <MoreHorizontalIcon className="size-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" sideOffset={2}>
-              <DropdownMenuItem
-                render={<Link href={`/admin/courses/${course.id}`} />}
-              >
-                <EyeIcon />
-                View details
-              </DropdownMenuItem>
               <DropdownMenuItem
                 render={<Link href={`/admin/courses/${course.id}/edit`} />}
               >

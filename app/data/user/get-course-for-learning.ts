@@ -3,14 +3,14 @@ import "server-only";
 import { notFound, redirect } from "next/navigation";
 
 import prisma from "@/lib/prisma";
+import { getDownloadUrl, getDownloadUrls } from "@/lib/s3/get-download-url";
 import { requireUser } from "./require-user";
 
 export type tCourseForLearningLesson = {
   id: string;
   title: string;
   description: string | null;
-  videoKey: string | null;
-  thumbnailKey: string | null;
+  videoUrl: string | null;
   position: number;
   completed: boolean;
 };
@@ -27,7 +27,7 @@ export type tCourseForLearning = {
   title: string;
   slug: string;
   smallDesc: string;
-  fileKey: string | null;
+  imageUrl: string | null;
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   courseChapters: tCourseForLearningChapter[];
 };
@@ -61,7 +61,6 @@ export async function getCourseForLearning({
               title: true,
               description: true,
               videoKey: true,
-              thumbnailKey: true,
               position: true,
               lessonProgress: {
                 where: { userId: session.user.id },
@@ -95,26 +94,37 @@ export async function getCourseForLearning({
     redirect(`/courses/${slug}`);
   }
 
+  const lessons = course.courseChapters.flatMap((c) => c.lessons);
+
+  const [imageUrl, videoUrls] = await Promise.all([
+    getDownloadUrl(course.fileKey),
+    getDownloadUrls(lessons.map((l) => l.videoKey)),
+  ]);
+
+  let cursor = 0;
+
   return {
     id: course.id,
     title: course.title,
     slug: course.slug,
     smallDesc: course.smallDesc,
-    fileKey: course.fileKey,
+    imageUrl,
     status: course.status,
     courseChapters: course.courseChapters.map((chapter) => ({
       id: chapter.id,
       title: chapter.title,
       position: chapter.position,
-      lessons: chapter.lessons.map((lesson) => ({
-        id: lesson.id,
-        title: lesson.title,
-        description: lesson.description,
-        videoKey: lesson.videoKey,
-        thumbnailKey: lesson.thumbnailKey,
-        position: lesson.position,
-        completed: lesson.lessonProgress[0]?.completed ?? false,
-      })),
+      lessons: chapter.lessons.map((lesson) => {
+        const li = cursor++;
+        return {
+          id: lesson.id,
+          title: lesson.title,
+          description: lesson.description,
+          videoUrl: videoUrls[li] ?? null,
+          position: lesson.position,
+          completed: lesson.lessonProgress[0]?.completed ?? false,
+        };
+      }),
     })),
   };
 }

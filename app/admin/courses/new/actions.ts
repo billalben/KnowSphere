@@ -82,7 +82,7 @@ export async function createCourse(values: CourseSchemaType) {
       course = await prisma.$transaction(async (tx) => {
         const categories = await resolveCategories(categoryNames, tx);
 
-        return tx.course.create({
+        const created = await tx.course.create({
           data: {
             ...courseFields,
             userId: session.user.id,
@@ -92,6 +92,14 @@ export async function createCourse(values: CourseSchemaType) {
             },
           },
         });
+
+        if (courseFields.fileKey) {
+          await tx.pendingUpload
+            .delete({ where: { key: courseFields.fileKey } })
+            .catch(() => {});
+        }
+
+        return created;
       });
     } catch (err) {
       if (err instanceof CATEGORY_LIMIT_EXCEEDED) {

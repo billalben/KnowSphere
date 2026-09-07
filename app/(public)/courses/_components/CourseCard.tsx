@@ -48,7 +48,7 @@ export function CourseCard({ course, className }: CourseCardProps) {
     >
       <div className="relative aspect-video w-full overflow-hidden bg-muted">
         <CourseImage
-          fileKey={course.fileKey}
+          imageUrl={course.imageUrl}
           alt={course.title}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
           imageClassName="transition-transform duration-500 group-hover:scale-105"

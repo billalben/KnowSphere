@@ -1,6 +1,7 @@
 import "server-only";
 
 import prisma from "@/lib/prisma";
+import { getDownloadUrl } from "@/lib/s3/get-download-url";
 import { requireAdmin } from "./require-admin";
 import { notFound } from "next/navigation";
 
@@ -16,7 +17,6 @@ export async function adminGetLesson({ id }: TAdminGetLessonProps) {
     select: {
       title: true,
       videoKey: true,
-      thumbnailKey: true,
       description: true,
       id: true,
       position: true,
@@ -27,7 +27,9 @@ export async function adminGetLesson({ id }: TAdminGetLessonProps) {
     return notFound();
   }
 
-  return data;
+  const videoUrl = await getDownloadUrl(data.videoKey);
+
+  return { ...data, videoUrl };
 }
 
 export type TAdminGetLesson = Awaited<ReturnType<typeof adminGetLesson>>;

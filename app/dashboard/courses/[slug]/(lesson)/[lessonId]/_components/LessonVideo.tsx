@@ -2,15 +2,13 @@
 
 import { FilmIcon } from "lucide-react";
 
-import { env } from "@/lib/env";
-
 interface LessonVideoProps {
-  videoKey: string | null;
+  videoUrl: string | null;
   title: string;
 }
 
-export function LessonVideo({ videoKey, title }: LessonVideoProps) {
-  if (!videoKey) {
+export function LessonVideo({ videoUrl, title }: LessonVideoProps) {
+  if (!videoUrl) {
     return (
       <div
         role="img"
@@ -33,13 +31,11 @@ export function LessonVideo({ videoKey, title }: LessonVideoProps) {
     );
   }
 
-  const src = `https://${env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES}.t3.tigrisfiles.io/${videoKey}`;
-
   return (
     <div className="overflow-hidden rounded-xl border bg-black">
       <video
-        key={videoKey}
-        src={src}
+        key={videoUrl}
+        src={videoUrl}
         controls
         preload="metadata"
         playsInline

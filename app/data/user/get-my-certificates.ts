@@ -1,6 +1,7 @@
 import "server-only";
 
 import prisma from "@/lib/prisma";
+import { getDownloadUrl } from "@/lib/s3/get-download-url";
 
 import { requireUser } from "./require-user";
 
@@ -14,7 +15,7 @@ export type tMyCertificate = {
     slug: string;
     title: string;
     smallDesc: string;
-    fileKey: string | null;
+    imageUrl: string | null;
     level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
     duration: number;
   } | null;
@@ -59,11 +60,28 @@ export async function getMyCertificates(): Promise<tMyCertificate[]> {
     },
   });
 
-  return rows.map((row) => ({
+  const coursesWithUrls = await Promise.all(
+    rows.map(async (row) => ({
+      ...row,
+      imageUrl: row.course
+        ? await getDownloadUrl(row.course.fileKey)
+        : null,
+    })),
+  );
+
+  return coursesWithUrls.map((row) => ({
     id: row.id,
     verificationCode: row.verificationCode,
     issuedAt: row.issuedAt,
-    course: row.course,
+    course: row.course && {
+      id: row.course.id,
+      slug: row.course.slug,
+      title: row.course.title,
+      smallDesc: row.course.smallDesc,
+      imageUrl: row.imageUrl,
+      level: row.course.level,
+      duration: row.course.duration,
+    },
     courseTitleSnapshot: row.courseTitleSnapshot,
     courseSlugSnapshot: row.courseSlugSnapshot,
     levelSnapshot: row.levelSnapshot,

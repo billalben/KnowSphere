@@ -7,6 +7,7 @@ import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 import { request } from "@arcjet/next";
 import { revalidatePath } from "next/cache";
 import { adminLog } from "@/lib/activity/admin-log";
+import { deleteObject } from "@/lib/s3/discard-upload";
 
 const aj = arcjet
   .withRule(
@@ -38,7 +39,19 @@ export async function deleteCourse({ courseId }: { courseId: string }) {
 
     const course = await prisma.course.findUnique({
       where: { id: courseId },
-      select: { id: true, title: true, slug: true },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        fileKey: true,
+        courseChapters: {
+          select: {
+            lessons: {
+              select: { videoKey: true },
+            },
+          },
+        },
+      },
     });
 
     if (!course) {
@@ -50,6 +63,21 @@ export async function deleteCourse({ courseId }: { courseId: string }) {
     await prisma.course.delete({
       where: { id: courseId },
     });
+
+    // Best-effort: clean up Tigris objects now that nothing references them.
+    const keysToDelete = [
+      course.fileKey,
+      ...course.courseChapters.flatMap((c) =>
+        c.lessons.map((l) => l.videoKey),
+      ),
+    ].filter((k): k is string => Boolean(k));
+
+    await Promise.all(keysToDelete.map(deleteObject));
+    if (keysToDelete.length > 0) {
+      await prisma.pendingUpload
+        .deleteMany({ where: { key: { in: keysToDelete } } })
+        .catch(() => {});
+    }
 
     await adminLog({
       action: "COURSE_DELETED",

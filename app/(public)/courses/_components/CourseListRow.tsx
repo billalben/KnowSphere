@@ -48,7 +48,7 @@ export function CourseListRow({ course, className }: CourseListRowProps) {
     >
       <div className="relative aspect-video w-full overflow-hidden bg-muted sm:aspect-auto sm:h-auto sm:w-60 sm:shrink-0">
         <CourseImage
-          fileKey={course.fileKey}
+          imageUrl={course.imageUrl}
           alt={course.title}
           sizes="(max-width: 640px) 100vw, 240px"
           imageClassName="transition-transform duration-500 group-hover:scale-105"

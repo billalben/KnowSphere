@@ -4,12 +4,12 @@ import { CourseImage } from "@/components/general/CourseImage";
 import { cn } from "@/lib/utils";
 
 interface CoverImageProps {
-  fileKey: string | null;
+  imageUrl: string | null;
   title: string;
   className?: string;
 }
 
-export function CoverImage({ fileKey, title, className }: CoverImageProps) {
+export function CoverImage({ imageUrl, title, className }: CoverImageProps) {
   return (
     <div
       className={cn(
@@ -18,7 +18,7 @@ export function CoverImage({ fileKey, title, className }: CoverImageProps) {
       )}
     >
       <CourseImage
-        fileKey={fileKey}
+        imageUrl={imageUrl}
         alt={title}
         priority
         sizes="(max-width: 1024px) 100vw, 70vw"

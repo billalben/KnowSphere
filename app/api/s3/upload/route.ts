@@ -7,6 +7,7 @@ import { S3Client } from "@/lib/S3Client";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 import { requireAdmin } from "@/app/data/admin/require-admin";
+import prisma from "@/lib/prisma";
 
 export const fileUploadSchema = z.object({
   fileName: z.string().min(1, { message: "File name is required" }),
@@ -66,6 +67,18 @@ export async function POST(request: Request) {
 
     const presignedUrl = await getSignedUrl(S3Client, command, {
       expiresIn: 360, // URL expires in 6 minutes
+    });
+
+    await prisma.pendingUpload.upsert({
+      where: { key: uniqueKey },
+      create: {
+        key: uniqueKey,
+        userId: session.user.id,
+      },
+      update: {
+        userId: session.user.id,
+        createdAt: new Date(),
+      },
     });
 
     return NextResponse.json({ presignedUrl, key: uniqueKey }, { status: 200 });

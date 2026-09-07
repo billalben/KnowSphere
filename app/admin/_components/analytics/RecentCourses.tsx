@@ -105,7 +105,7 @@ export function RecentCourses({ courses }: RecentCoursesProps) {
                 >
                   <div className="relative size-12 shrink-0 overflow-hidden rounded-md bg-muted">
                     <CourseImage
-                      fileKey={course.fileKey}
+                      imageUrl={course.imageUrl}
                       alt={course.title}
                       sizes="48px"
                       compact

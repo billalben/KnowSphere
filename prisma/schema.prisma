@@ -236,7 +236,6 @@ model Lesson {
 
   title        String
   description  String?
-  thumbnailKey String?
   videoKey     String?
 
   position Int
@@ -424,6 +423,15 @@ model WishlistItem {
   @@index([userId, createdAt])
   @@index([courseId])
   @@map("wishlist_item")
+}
+
+model PendingUpload {
+  key       String   @id
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("pending_upload")
 }
 
 model Certificate {

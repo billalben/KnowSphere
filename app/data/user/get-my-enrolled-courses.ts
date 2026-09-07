@@ -1,6 +1,7 @@
 import "server-only";
 
 import prisma from "@/lib/prisma";
+import { getDownloadUrls } from "@/lib/s3/get-download-url";
 import { requireUser } from "./require-user";
 
 export type tEnrolledCourse = {
@@ -9,7 +10,7 @@ export type tEnrolledCourse = {
   slug: string;
   title: string;
   smallDesc: string;
-  fileKey: string | null;
+  imageUrl: string | null;
   level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
   duration: number;
   chaptersCount: number;
@@ -58,7 +59,11 @@ export async function getMyEnrolledCourses(): Promise<tEnrolledCourse[]> {
     },
   });
 
-  return enrollments.map((enrollment) => {
+  const imageUrls = await getDownloadUrls(
+    enrollments.map((e) => e.course.fileKey),
+  );
+
+  return enrollments.map((enrollment, i) => {
     const chapters = enrollment.course.courseChapters;
     const lessons = chapters.flatMap((chapter) =>
       chapter.lessons.map((lesson) => ({
@@ -77,7 +82,7 @@ export async function getMyEnrolledCourses(): Promise<tEnrolledCourse[]> {
       slug: enrollment.course.slug,
       title: enrollment.course.title,
       smallDesc: enrollment.course.smallDesc,
-      fileKey: enrollment.course.fileKey,
+      imageUrl: imageUrls[i],
       level: enrollment.course.level,
       duration: enrollment.course.duration,
       chaptersCount: chapters.length,

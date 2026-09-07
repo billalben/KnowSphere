@@ -3,6 +3,7 @@ import "server-only";
 import { notFound } from "next/navigation";
 
 import prisma from "@/lib/prisma";
+import { getDownloadUrl } from "@/lib/s3/get-download-url";
 
 export async function getCourseBySlug(slug: string) {
   const course = await prisma.course.findUnique({
@@ -68,6 +69,8 @@ export async function getCourseBySlug(slug: string) {
     notFound();
   }
 
+  const imageUrl = await getDownloadUrl(course.fileKey);
+
   const reviews = course.courseReviews.map((r) => ({
     id: r.id,
     rating: r.rating,
@@ -83,7 +86,7 @@ export async function getCourseBySlug(slug: string) {
     },
   }));
 
-  return { ...course, courseReviews: reviews };
+  return { ...course, imageUrl, courseReviews: reviews };
 }
 
 export type tCourseDetail = Awaited<ReturnType<typeof getCourseBySlug>>;

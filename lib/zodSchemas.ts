@@ -59,7 +59,6 @@ export const lessonSchema = z.object({
     .optional(),
 
   videoKey: z.string().optional().nullable(),
-  thumbnailKey: z.string().optional().nullable(),
 });
 
 export enum EQuizQuestionType {

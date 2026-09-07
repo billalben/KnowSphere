@@ -70,9 +70,14 @@ export async function updateLesson(lessonId: string, values: LessonSchemaType) {
         title: validatedData.data.name,
         description: validatedData.data.description ?? null,
         videoKey: validatedData.data.videoKey ?? null,
-        thumbnailKey: validatedData.data.thumbnailKey ?? null,
       },
     });
+
+    if (validatedData.data.videoKey) {
+      await prisma.pendingUpload
+        .delete({ where: { key: validatedData.data.videoKey } })
+        .catch(() => {});
+    }
 
     await adminLog({
       action: "LESSON_UPDATED",

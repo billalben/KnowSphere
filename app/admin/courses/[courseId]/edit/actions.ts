@@ -16,6 +16,7 @@ import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 import { request } from "@arcjet/next";
 import { revalidatePath } from "next/cache";
 import { adminLog } from "@/lib/activity/admin-log";
+import { deleteObject } from "@/lib/s3/discard-upload";
 import {
   CATEGORY_LIMIT_EXCEEDED,
   resolveCategories,
@@ -65,6 +66,7 @@ export async function updateCourse(courseId: string, values: CourseSchemaType) {
         price: true,
         level: true,
         slug: true,
+        fileKey: true,
         categories: { select: { id: true, name: true }, orderBy: { name: "asc" } },
       },
     });
@@ -74,7 +76,7 @@ export async function updateCourse(courseId: string, values: CourseSchemaType) {
       course = await prisma.$transaction(async (tx) => {
         const categories = await resolveCategories(categoryNames, tx);
 
-        return tx.course.update({
+        const updated = await tx.course.update({
           where: { id: courseId },
           data: {
             ...courseFields,
@@ -83,12 +85,29 @@ export async function updateCourse(courseId: string, values: CourseSchemaType) {
             },
           },
         });
+
+        if (courseFields.fileKey) {
+          await tx.pendingUpload
+            .delete({ where: { key: courseFields.fileKey } })
+            .catch(() => {});
+        }
+
+        return updated;
       });
     } catch (err) {
       if (err instanceof CATEGORY_LIMIT_EXCEEDED) {
         return errorResponse(err.message, null);
       }
       throw err;
+    }
+
+    // If the thumbnail was replaced or removed, delete the previous object
+    // from Tigris (best-effort) so it doesn't leak.
+    if (before?.fileKey && before.fileKey !== course.fileKey) {
+      await deleteObject(before.fileKey);
+      await prisma.pendingUpload
+        .delete({ where: { key: before.fileKey } })
+        .catch(() => {});
     }
 
     if (before) {
@@ -297,17 +316,22 @@ export async function createLesson(values: LessonSchemaType) {
         orderBy: { position: "desc" },
       });
 
-      const created = await tx.lesson.create({
-        data: {
-          title: validatedData.data.name,
-          description: validatedData.data.description,
-          videoKey: validatedData.data.videoKey,
-          thumbnailKey: validatedData.data.thumbnailKey,
-          position: (maxPosition?.position ?? 0) + 1,
-          chapterId: validatedData.data.chapterId,
-        },
-        select: { id: true, title: true },
-      });
+        const created = await tx.lesson.create({
+          data: {
+            title: validatedData.data.name,
+            description: validatedData.data.description,
+            videoKey: validatedData.data.videoKey,
+            position: (maxPosition?.position ?? 0) + 1,
+            chapterId: validatedData.data.chapterId,
+          },
+          select: { id: true, title: true },
+        });
+
+        if (validatedData.data.videoKey) {
+          await tx.pendingUpload
+            .delete({ where: { key: validatedData.data.videoKey } })
+            .catch(() => {});
+        }
 
       await adminLog(
         {
@@ -344,6 +368,15 @@ export async function deleteLesson({
   await requireAdmin(); // checks if the user is an admin, if not, it will redirect to the login page
 
   try {
+    const lesson = await prisma.lesson.findUnique({
+      where: { id: lessonId },
+      select: { videoKey: true },
+    });
+
+    if (!lesson) {
+      return errorResponse("Lesson not found", null);
+    }
+
     const chapterwithlessons = await prisma.courseChapter.findUnique({
       where: { id: chapterId },
       select: {
@@ -364,12 +397,12 @@ export async function deleteLesson({
       return errorResponse("No lessons found", null);
     }
 
-    const lessonToDelete = lessons.find((lesson) => lesson.id === lessonId);
+    const lessonToDelete = lessons.find((l) => l.id === lessonId);
     if (!lessonToDelete) {
       return errorResponse("Lesson not found", null);
     }
 
-    const remainingLessons = lessons.filter((lesson) => lesson.id !== lessonId);
+    const remainingLessons = lessons.filter((l) => l.id !== lessonId);
 
     // Two-step reposition to avoid @@unique([chapterId, position]) violations:
     // move remaining lessons to temporary negative positions, delete the target,
@@ -408,6 +441,13 @@ export async function deleteLesson({
       );
     });
 
+    if (lesson.videoKey) {
+      await deleteObject(lesson.videoKey);
+      await prisma.pendingUpload
+        .delete({ where: { key: lesson.videoKey } })
+        .catch(() => {});
+    }
+
     revalidatePath(`/admin/courses/${courseId}/edit`);
 
     return successResponse("Lesson deleted successfully", null);
@@ -431,7 +471,12 @@ export async function deleteChapter({
       select: {
         courseChapters: {
           orderBy: { position: "asc" },
-          select: { id: true, position: true, title: true },
+          select: {
+            id: true,
+            position: true,
+            title: true,
+            lessons: { select: { videoKey: true } },
+          },
         },
       },
     });
@@ -441,6 +486,9 @@ export async function deleteChapter({
     }
 
     const chapters = courseWithChapters.courseChapters;
+    const chapterToDeleteVideos = chapters.find(
+      (c) => c.id === chapterId,
+    )?.lessons.map((l) => l.videoKey) ?? [];
 
     if (chapters.length === 0) {
       return errorResponse("No lessons found", null);
@@ -494,6 +542,16 @@ export async function deleteChapter({
         tx,
       );
     });
+
+    const keysToDelete = chapterToDeleteVideos.filter(
+      (k): k is string => Boolean(k),
+    );
+    if (keysToDelete.length > 0) {
+      await Promise.all(keysToDelete.map(deleteObject));
+      await prisma.pendingUpload
+        .deleteMany({ where: { key: { in: keysToDelete } } })
+        .catch(() => {});
+    }
 
     revalidatePath(`/admin/courses/${courseId}/edit`);
 

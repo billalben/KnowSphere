@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { type Accept, type FileRejection, useDropzone } from "react-dropzone";
 import { Card, CardContent } from "../ui/card";
 import { cn } from "@/lib/utils";
@@ -24,11 +24,15 @@ interface iUploaderState {
   error: boolean;
   objectUrl?: string;
   fileType: "image" | "video";
+  isInitial?: boolean;
 }
 
 interface UploaderProps {
   onUploadComplete?: (key: string) => void;
   fileType?: "image" | "video";
+  initialPreviewUrl?: string | null;
+  initialKey?: string | null;
+  onRemoveInitial?: () => void;
 }
 
 const MAX_IMAGE_SIZE = 3 * 1024 * 1024; // 3MB
@@ -37,19 +41,54 @@ const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
 export function Uploader({
   onUploadComplete,
   fileType = "image",
+  initialPreviewUrl = null,
+  initialKey = null,
+  onRemoveInitial,
 }: UploaderProps) {
   const maxSize = fileType === "video" ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
   const maxSizeLabel = fileType === "video" ? "100MB" : "3MB";
 
-  const [fileState, setFileState] = useState<iUploaderState>({
-    error: false,
-    file: null,
-    id: null,
-    uploading: false,
-    progress: 0,
-    isDeleting: false,
-    fileType,
+  const [fileState, setFileState] = useState<iUploaderState>(() => {
+    if (initialPreviewUrl) {
+      return {
+        error: false,
+        file: null,
+        id: null,
+        uploading: false,
+        progress: 0,
+        isDeleting: false,
+        fileType,
+        objectUrl: initialPreviewUrl,
+        key: initialKey ?? undefined,
+        isInitial: true,
+      };
+    }
+    return {
+      error: false,
+      file: null,
+      id: null,
+      uploading: false,
+      progress: 0,
+      isDeleting: false,
+      fileType,
+    };
   });
+
+  const pendingKeysRef = useRef<Set<string>>(new Set());
+
+  const discardPending = useCallback(() => {
+    const keys = Array.from(pendingKeysRef.current);
+    pendingKeysRef.current.clear();
+    if (keys.length === 0) return;
+    try {
+      const blob = new Blob([JSON.stringify({ keys })], {
+        type: "application/json",
+      });
+      navigator.sendBeacon("/api/s3/discard-upload", blob);
+    } catch {
+      // Best-effort cleanup; ignore beacon failures.
+    }
+  }, []);
 
   const uploadFile = useCallback(
     async (file: File) => {
@@ -100,6 +139,7 @@ export function Uploader({
                 key,
               }));
 
+              pendingKeysRef.current.add(key);
               onUploadComplete?.(key);
               toast.success("File uploaded successfully");
               resolve(xhr.response);
@@ -147,6 +187,10 @@ export function Uploader({
           URL.revokeObjectURL(fileState.objectUrl);
         }
 
+        if (fileState.key) {
+          pendingKeysRef.current.delete(fileState.key);
+        }
+
         setFileState({
           file,
           uploading: true,
@@ -156,16 +200,28 @@ export function Uploader({
           id: uuidv4(),
           isDeleting: false,
           fileType,
+          isInitial: false,
         });
 
         uploadFile(file);
       }
     },
-    [fileState.objectUrl, fileType, uploadFile],
+    [fileState.objectUrl, fileState.key, fileType, uploadFile],
   );
 
   const handleRemoveFile = useCallback(async () => {
     if (fileState.isDeleting || !fileState.objectUrl) return;
+
+    if (fileState.isInitial) {
+      onRemoveInitial?.();
+      setFileState((prev) => ({
+        ...prev,
+        objectUrl: undefined,
+        key: undefined,
+        isInitial: false,
+      }));
+      return;
+    }
 
     try {
       setFileState((prev) => ({
@@ -185,6 +241,10 @@ export function Uploader({
 
       if (fileState.objectUrl && !fileState.objectUrl.startsWith("http")) {
         URL.revokeObjectURL(fileState.objectUrl);
+      }
+
+      if (fileState.key) {
+        pendingKeysRef.current.delete(fileState.key);
       }
 
       setFileState(() => ({
@@ -208,7 +268,7 @@ export function Uploader({
         error: true,
       }));
     }
-  }, [fileState, fileType]);
+  }, [fileState, fileType, onRemoveInitial]);
 
   function rejectefFiles(fileRejection: FileRejection[]) {
     if (fileRejection.length) {
@@ -267,8 +327,9 @@ export function Uploader({
       if (fileState.objectUrl && !fileState.objectUrl.startsWith("http")) {
         URL.revokeObjectURL(fileState.objectUrl);
       }
+      discardPending();
     };
-  }, [fileState.objectUrl]);
+  }, [fileState.objectUrl, discardPending]);
 
   const accept: Accept =
     fileType === "video"
@@ -282,7 +343,9 @@ export function Uploader({
     multiple: false,
     maxSize,
     onDropRejected: rejectefFiles,
-    disabled: fileState.uploading || !!fileState.objectUrl,
+    disabled:
+      fileState.uploading ||
+      (!!fileState.objectUrl && !fileState.isInitial),
   });
 
   return (

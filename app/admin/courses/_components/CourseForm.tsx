@@ -64,6 +64,8 @@ export type CourseFormProps = {
   formId?: string;
   showReset?: boolean;
   fireConfetti?: boolean;
+  existingImageUrl?: string | null;
+  existingImageKey?: string | null;
 };
 
 export function CourseForm({
@@ -79,6 +81,8 @@ export function CourseForm({
   formId = "course-form",
   showReset = true,
   fireConfetti = false,
+  existingImageUrl = null,
+  existingImageKey = null,
 }: CourseFormProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -264,17 +268,26 @@ export function CourseForm({
               control={form.control}
               render={({ field }) => (
                 <Field>
-                  <FieldLabel htmlFor="fileKey">Thumbnail</FieldLabel>
+                  <FieldLabel htmlFor="fileKey">
+                    Thumbnail{" "}
+                    <span className="text-muted-foreground font-normal">
+                      (Optional)
+                    </span>
+                  </FieldLabel>
                   <Uploader
+                    initialPreviewUrl={existingImageUrl}
+                    initialKey={existingImageKey}
+                    onRemoveInitial={() => field.onChange("")}
                     onUploadComplete={(key) => {
                       field.onChange(key);
                     }}
                   />
-                  {field.value && (
+                  {field.value === "" && existingImageKey ? (
                     <FieldDescription>
-                      Uploaded key: <strong>{field.value}</strong>
+                      Current thumbnail will be removed when you save. Drop a
+                      new file to replace it.
                     </FieldDescription>
-                  )}
+                  ) : null}
                 </Field>
               )}
             />

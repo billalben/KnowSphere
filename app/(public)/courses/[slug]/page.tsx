@@ -69,7 +69,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
     <div className="pt-24 lg:pt-32 pb-12 lg:pb-16">
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-10 lg:gap-12">
         <div className="lg:col-span-6 space-y-8">
-          <CoverImage fileKey={course.fileKey} title={course.title} />
+          <CoverImage imageUrl={course.imageUrl} title={course.title} />
 
           <CourseHeader title={course.title} smallDesc={course.smallDesc} />
 

@@ -1,6 +1,7 @@
 import "server-only";
 
 import prisma from "@/lib/prisma";
+import { getDownloadUrl, getDownloadUrls } from "@/lib/s3/get-download-url";
 import { requireAdmin } from "./require-admin";
 import { notFound } from "next/navigation";
 
@@ -42,7 +43,6 @@ export async function adminGetCourse(courseId: string) {
               id: true,
               title: true,
               description: true,
-              thumbnailKey: true,
               videoKey: true,
               position: true,
             },
@@ -56,7 +56,26 @@ export async function adminGetCourse(courseId: string) {
     notFound();
   }
 
-  return course;
+  const lessons = course.courseChapters.flatMap((c) => c.lessons);
+
+  const [imageUrl, videoUrls] = await Promise.all([
+    getDownloadUrl(course.fileKey),
+    getDownloadUrls(lessons.map((l) => l.videoKey)),
+  ]);
+
+  let cursor = 0;
+
+  return {
+    ...course,
+    imageUrl,
+    courseChapters: course.courseChapters.map((chapter) => ({
+      ...chapter,
+      lessons: chapter.lessons.map((lesson) => {
+        const li = cursor++;
+        return { ...lesson, videoUrl: videoUrls[li] ?? null };
+      }),
+    })),
+  };
 }
 
 export type tAdminGetCourse = Awaited<ReturnType<typeof adminGetCourse>>;

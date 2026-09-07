@@ -4,11 +4,10 @@ import Image from "next/image";
 import { ImageIcon } from "lucide-react";
 import { useState } from "react";
 
-import { useConstructUrl } from "@/hooks/use-construct";
 import { cn } from "@/lib/utils";
 
 interface CourseImageProps {
-  fileKey: string | null;
+  imageUrl: string | null;
   alt: string;
   sizes?: string;
   priority?: boolean;
@@ -17,7 +16,7 @@ interface CourseImageProps {
 }
 
 export function CourseImage({
-  fileKey,
+  imageUrl,
   alt,
   sizes,
   priority,
@@ -25,9 +24,8 @@ export function CourseImage({
   compact = false,
 }: CourseImageProps) {
   const [hasError, setHasError] = useState(false);
-  const imageUrl = useConstructUrl(fileKey);
 
-  if (!fileKey || hasError) {
+  if (!imageUrl || hasError) {
     return (
       <div
         role="img"

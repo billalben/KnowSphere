@@ -45,6 +45,8 @@ export function EditCourseForm({
       successDescription="Your course has been updated."
       redirectTo="/admin/courses"
       showReset={false}
+      existingImageUrl={course.imageUrl}
+      existingImageKey={course.fileKey}
     />
   );
 }

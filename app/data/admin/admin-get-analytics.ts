@@ -1,6 +1,7 @@
 import "server-only";
 
 import prisma from "@/lib/prisma";
+import { getDownloadUrls } from "@/lib/s3/get-download-url";
 import { requireAdmin } from "./require-admin";
 
 const DAYS = 30;
@@ -20,7 +21,7 @@ export type tAnalyticsRecentCourse = {
   id: string;
   title: string;
   smallDesc: string;
-  fileKey: string | null;
+  imageUrl: string | null;
   price: number;
   duration: number;
   level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
@@ -184,6 +185,10 @@ export async function adminGetAnalytics(): Promise<tAnalytics> {
   const sparkPointsFromBuckets = (buckets: Map<string, number>): tAnalyticsSparkPoint[] =>
     Array.from(buckets.entries()).map(([date, value]) => ({ date, value }));
 
+  const recentImageUrls = await getDownloadUrls(
+    recentCourses.map((c) => c.fileKey),
+  );
+
   return {
     stats: {
       totalUsers,
@@ -205,6 +210,17 @@ export async function adminGetAnalytics(): Promise<tAnalytics> {
       revenue: sparkPointsFromBuckets(revenueBuckets),
     },
     enrollmentTrend: Array.from(trendBuckets.values()),
-    recentCourses,
+    recentCourses: recentCourses.map((c, i) => ({
+      id: c.id,
+      title: c.title,
+      smallDesc: c.smallDesc,
+      imageUrl: recentImageUrls[i],
+      price: c.price,
+      duration: c.duration,
+      level: c.level,
+      slug: c.slug,
+      status: c.status,
+      createdAt: c.createdAt,
+    })),
   };
 }

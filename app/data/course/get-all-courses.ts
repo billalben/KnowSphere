@@ -1,6 +1,7 @@
 import "server-only";
 
 import prisma from "@/lib/prisma";
+import { getDownloadUrls } from "@/lib/s3/get-download-url";
 
 export async function getAllCourses() {
   const courses = await prisma.course.findMany({
@@ -41,7 +42,9 @@ export async function getAllCourses() {
     orderBy: [{ createdAt: "desc" }, { updatedAt: "desc" }],
   });
 
-  return courses.map((course) => {
+  const imageUrls = await getDownloadUrls(courses.map((c) => c.fileKey));
+
+  return courses.map((course, i) => {
     const ratings = course.courseReviews;
     const reviewCount = ratings.length;
     const reviewAvg =
@@ -57,7 +60,7 @@ export async function getAllCourses() {
       level: course.level,
       status: course.status,
       price: course.price,
-      fileKey: course.fileKey,
+      imageUrl: imageUrls[i],
       slug: course.slug,
       createdAt: course.createdAt,
       updatedAt: course.updatedAt,

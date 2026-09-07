@@ -8,7 +8,7 @@ interface CourseOverviewHeaderProps {
   slug: string;
   title: string;
   smallDesc: string;
-  fileKey: string | null;
+  imageUrl: string | null;
   resumeLessonId: string | null;
   hasStarted: boolean;
 }
@@ -17,7 +17,7 @@ export function CourseOverviewHeader({
   slug,
   title,
   smallDesc,
-  fileKey,
+  imageUrl,
   resumeLessonId,
   hasStarted,
 }: CourseOverviewHeaderProps) {
@@ -35,7 +35,7 @@ export function CourseOverviewHeader({
 
       <div className="relative aspect-video w-full overflow-hidden rounded-xl border bg-muted">
         <CourseImage
-          fileKey={fileKey}
+          imageUrl={imageUrl}
           alt={title}
           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 80vw, 1024px"
         />
