@@ -1,8 +1,4 @@
-import {
-  QuoteIcon,
-  SparklesIcon,
-  StarIcon,
-} from "lucide-react";
+import { QuoteIcon, SparklesIcon, StarIcon } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -24,8 +20,7 @@ const TESTIMONIALS: Testimonial[] = [
     role: "Frontend Developer",
     initials: "SK",
     rating: 5,
-    iconColor:
-      "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    iconColor: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
     content:
       "KnowSphere changed how I learn. The lessons are clear, the platform is fast, and I can pick up right where I left off on any device.",
   },
@@ -35,8 +30,7 @@ const TESTIMONIALS: Testimonial[] = [
     role: "Product Designer",
     initials: "MR",
     rating: 5,
-    iconColor:
-      "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    iconColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
     content:
       "As a product designer, I care about details. KnowSphere nails them — from the seamless checkout to the clean course player. The mobile experience is just as polished as desktop. It's rare to find a learning platform that feels this well-designed.",
   },
@@ -46,8 +40,7 @@ const TESTIMONIALS: Testimonial[] = [
     role: "Data Scientist",
     initials: "AP",
     rating: 5,
-    iconColor:
-      "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    iconColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
     content:
       "I've tried a lot of platforms and KnowSphere is the first one where I actually finish courses. The instructor quality is consistently high, the content is well-structured, and the community keeps me accountable. I went from curious to confident in six months.",
   },
@@ -57,8 +50,7 @@ const TESTIMONIALS: Testimonial[] = [
     role: "Self-taught Developer",
     initials: "DO",
     rating: 5,
-    iconColor:
-      "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+    iconColor: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
     content:
       "Self-taught for years. KnowSphere filled the gaps I didn't know I had. Worth every penny.",
   },
@@ -68,8 +60,7 @@ const TESTIMONIALS: Testimonial[] = [
     role: "Marketing Manager",
     initials: "PS",
     rating: 5,
-    iconColor:
-      "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+    iconColor: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
     content:
       "The best part is how everything is organized. I can pick a learning path, track my progress, and revisit any lesson. The mobile app means I learn during my commute without skipping a beat. My team has now subscribed for everyone.",
   },
@@ -79,8 +70,7 @@ const TESTIMONIALS: Testimonial[] = [
     role: "Studio Founder",
     initials: "JW",
     rating: 5,
-    iconColor:
-      "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
+    iconColor: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
     content:
       "I run a small studio and use KnowSphere to keep my team sharp on the latest tools. The platform lets us assign courses, track who completed what, and run reports in seconds. The customer support team actually replies quickly — that's rare. We tried three competitors before settling on KnowSphere.",
   },
@@ -90,8 +80,7 @@ const TESTIMONIALS: Testimonial[] = [
     role: "Computer Science Student",
     initials: "FH",
     rating: 5,
-    iconColor:
-      "bg-pink-500/10 text-pink-600 dark:text-pink-400",
+    iconColor: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
     content:
       "Great instructors, great content, and I love the certificate feature for my LinkedIn profile.",
   },
@@ -101,8 +90,7 @@ const TESTIMONIALS: Testimonial[] = [
     role: "UX Researcher",
     initials: "CM",
     rating: 5,
-    iconColor:
-      "bg-teal-500/10 text-teal-600 dark:text-teal-400",
+    iconColor: "bg-teal-500/10 text-teal-600 dark:text-teal-400",
     content:
       "The interactive lessons are a game-changer. Quizzes and projects keep me engaged, not just passively watching. I've recommended KnowSphere to my entire design team — it's that good.",
   },
@@ -112,8 +100,7 @@ const TESTIMONIALS: Testimonial[] = [
     role: "Career Switcher",
     initials: "EW",
     rating: 5,
-    iconColor:
-      "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+    iconColor: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
     content:
       "I switched careers from accounting to UX at 38. KnowSphere's structured learning paths gave me the confidence to keep going on tough days. Six months in, I landed my first UX role. The instructors genuinely care, the community is supportive, and the certificates helped prove my new skills to employers. I couldn't have done it without this platform.",
   },
@@ -123,8 +110,7 @@ const TESTIMONIALS: Testimonial[] = [
     role: "DevOps Engineer",
     initials: "YT",
     rating: 5,
-    iconColor:
-      "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
+    iconColor: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
     content:
       "The depth of content is what keeps me coming back. Surface-level tutorials are everywhere, but KnowSphere goes deep on real-world projects. I learn something new in every session and apply it to my work the next day.",
   },
@@ -196,7 +182,7 @@ export function Testimonials() {
     <section className="relative overflow-hidden">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-primary/[0.02] to-transparent"
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-primary/5 via-primary/2 to-transparent"
       />
 
       <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-24 lg:px-8">
@@ -211,8 +197,8 @@ export function Testimonials() {
           </h2>
 
           <p className="text-base md:text-lg text-muted-foreground leading-relaxed text-balance">
-            Real feedback from learners and instructors who use KnowSphere
-            every day to build new skills and grow their careers.
+            Real feedback from learners and instructors who use KnowSphere every
+            day to build new skills and grow their careers.
           </p>
         </div>
 
@@ -229,10 +215,7 @@ export function Testimonials() {
           }}
         >
           {TESTIMONIALS.map((testimonial) => (
-            <div
-              key={testimonial.id}
-              className="mb-6 break-inside-avoid"
-            >
+            <div key={testimonial.id} className="mb-6 break-inside-avoid">
               <TestimonialCard testimonial={testimonial} />
             </div>
           ))}

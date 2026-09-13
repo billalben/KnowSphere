@@ -8,10 +8,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import {
-  ChevronDownIcon,
-  HelpCircleIcon,
-} from "lucide-react";
+import { ChevronDownIcon, HelpCircleIcon } from "lucide-react";
 
 interface FaqItem {
   id: string;
@@ -85,7 +82,7 @@ function FaqRow({
       </CollapsibleTrigger>
 
       <CollapsibleContent className="overflow-hidden">
-        <div className="border-t border-border px-5 py-4 pl-[4.25rem] text-sm leading-relaxed text-muted-foreground">
+        <div className="border-t border-border px-5 py-4 pl-17 text-sm leading-relaxed text-muted-foreground">
           {faq.answer}
         </div>
       </CollapsibleContent>

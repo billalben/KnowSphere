@@ -25,7 +25,7 @@ export function LegalPage({
         <header className="relative space-y-4 text-center">
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 -top-8 -z-10 mx-auto h-40 w-3/4 bg-gradient-to-b from-primary/10 via-primary/5 to-transparent blur-2xl"
+            className="pointer-events-none absolute inset-x-0 -top-8 -z-10 mx-auto h-40 w-3/4 bg-linear-to-b from-primary/10 via-primary/5 to-transparent blur-2xl"
           />
 
           <Badge variant="secondary" className="mx-auto">

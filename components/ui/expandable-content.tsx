@@ -45,8 +45,7 @@ export function ExpandableContent({
     const el = ref.current;
     if (!el) return;
 
-    const measure = () =>
-      setHasOverflow(el.scrollHeight > collapsedHeight);
+    const measure = () => setHasOverflow(el.scrollHeight > collapsedHeight);
     measure();
 
     const ro = new ResizeObserver(measure);
@@ -67,7 +66,7 @@ export function ExpandableContent({
           !expanded &&
             hasOverflow &&
             fade &&
-            "[mask-image:linear-gradient(to_bottom,black_0%,black_75%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_0%,black_75%,transparent_100%)]",
+            "mask-[linear-gradient(to_bottom,black_0%,black_75%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_0%,black_75%,transparent_100%)]",
         )}
         style={{ maxHeight: expanded ? expandedMaxHeight : collapsedHeight }}
       >

@@ -8,7 +8,7 @@ export function FAQ() {
     <section className="relative overflow-hidden">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-primary/[0.02] to-transparent"
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-primary/5 via-primary/2 to-transparent"
       />
 
       <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-24 lg:px-8">

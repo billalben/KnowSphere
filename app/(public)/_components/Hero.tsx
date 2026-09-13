@@ -36,13 +36,10 @@ export function Hero({ isAuthenticated }: HeroProps) {
     <section className="relative w-screen left-1/2 -translate-x-1/2 flex min-h-[calc(100svh-4rem)] items-center justify-center overflow-hidden py-20">
       {/* Background decorations — inside the section's now-viewport-width
           containing block, so inset-0 naturally spans edge-to-edge. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10"
-      >
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
         {/* Layer 1: subtle dot grid */}
         <svg
-          className="absolute inset-0 h-full w-full text-foreground/[0.05]"
+          className="absolute inset-0 h-full w-full text-foreground/5"
           xmlns="http://www.w3.org/2000/svg"
           aria-hidden
         >
@@ -60,8 +57,8 @@ export function Hero({ isAuthenticated }: HeroProps) {
         </svg>
 
         {/* Layer 2: blurred gradient orbs */}
-        <div className="absolute -left-20 top-1/4 size-[28rem] rounded-full bg-primary/20 blur-3xl" />
-        <div className="absolute -right-20 bottom-1/4 size-[28rem] rounded-full bg-purple-500/15 blur-3xl" />
+        <div className="absolute -left-20 top-1/4 size-112 rounded-full bg-primary/20 blur-3xl" />
+        <div className="absolute -right-20 bottom-1/4 size-112 rounded-full bg-purple-500/15 blur-3xl" />
 
         {/* Layer 3: floating squares */}
         <div className="absolute left-[12%] top-[18%] size-8 rotate-12 rounded-md border border-foreground/10 bg-background/60 shadow-sm backdrop-blur-sm" />
@@ -79,7 +76,7 @@ export function Hero({ isAuthenticated }: HeroProps) {
 
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] text-balance">
           Elevate your{" "}
-          <span className="bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+          <span className="bg-linear-to-r from-primary to-purple-500 bg-clip-text text-transparent">
             learning journey
           </span>{" "}
           with KnowSphere.
@@ -91,10 +88,7 @@ export function Hero({ isAuthenticated }: HeroProps) {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center gap-3">
-          <Link
-            href="/courses"
-            className={buttonVariants({ size: "lg" })}
-          >
+          <Link href="/courses" className={buttonVariants({ size: "lg" })}>
             Explore Courses
             <ArrowRightIcon className="size-4" />
           </Link>
@@ -110,10 +104,7 @@ export function Hero({ isAuthenticated }: HeroProps) {
 
         <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 pt-6">
           {STATS.map((stat) => (
-            <div
-              key={stat.label}
-              className="flex items-center gap-2 text-sm"
-            >
+            <div key={stat.label} className="flex items-center gap-2 text-sm">
               <stat.icon className="size-4 text-primary" aria-hidden />
               <span className="font-semibold tabular-nums text-foreground">
                 {stat.value}

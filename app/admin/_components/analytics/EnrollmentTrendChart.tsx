@@ -63,10 +63,7 @@ export function EnrollmentTrendChart({ data }: EnrollmentTrendChartProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer
-          config={config}
-          className="!aspect-auto h-72 w-full"
-        >
+        <ChartContainer config={config} className="aspect-auto! h-72 w-full">
           <AreaChart
             data={data}
             margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
@@ -110,10 +107,7 @@ export function EnrollmentTrendChart({ data }: EnrollmentTrendChartProps) {
               </linearGradient>
             </defs>
 
-            <CartesianGrid
-              strokeDasharray="3 3"
-              vertical={false}
-            />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="date"
               tickLine={false}

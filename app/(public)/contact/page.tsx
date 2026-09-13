@@ -1,16 +1,7 @@
 import { type Metadata } from "next";
-import {
-  MailIcon,
-  ShieldCheckIcon,
-  TimerIcon,
-} from "lucide-react";
+import { MailIcon, ShieldCheckIcon, TimerIcon } from "lucide-react";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getOptionalSession } from "../_lib/get-optional-session";
 
@@ -36,12 +27,9 @@ export default async function ContactPage() {
        even though <main> constrains its own width. */
     <section className="relative w-screen left-1/2 -translate-x-1/2 flex min-h-[calc(100svh-4rem)] items-center justify-center overflow-hidden py-12">
       {/* Background layer — viewport-spanning decorative dots/orbs/squares. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10"
-      >
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
         <svg
-          className="absolute inset-0 h-full w-full text-foreground/[0.05]"
+          className="absolute inset-0 h-full w-full text-foreground/5"
           xmlns="http://www.w3.org/2000/svg"
           aria-hidden
         >
@@ -58,8 +46,8 @@ export default async function ContactPage() {
           <rect width="100%" height="100%" fill="url(#contact-dot-grid)" />
         </svg>
 
-        <div className="absolute -right-32 top-1/4 size-[26rem] rounded-full bg-primary/15 blur-3xl" />
-        <div className="absolute -left-24 bottom-1/4 size-[24rem] rounded-full bg-purple-500/12 blur-3xl" />
+        <div className="absolute -right-32 top-1/4 size-104 rounded-full bg-primary/15 blur-3xl" />
+        <div className="absolute -left-24 bottom-1/4 size-96 rounded-full bg-purple-500/12 blur-3xl" />
 
         <div className="absolute right-[14%] top-[22%] size-10 -rotate-6 rounded-md border border-foreground/10 bg-background/60 shadow-sm backdrop-blur-sm" />
         <div className="absolute bottom-[26%] left-[12%] size-7 rotate-12 rounded-md border border-foreground/10 bg-background/60 shadow-sm backdrop-blur-sm" />
@@ -76,8 +64,8 @@ export default async function ContactPage() {
               Get in touch.
             </h1>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-              Questions about a tutorial, the starter kit, or the course? Send
-              a message and a human will reply, usually within a day or two.
+              Questions about a tutorial, the starter kit, or the course? Send a
+              message and a human will reply, usually within a day or two.
             </p>
           </div>
 

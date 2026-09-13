@@ -25,48 +25,42 @@ const FEATURES: FeatureItem[] = [
     description:
       "Explore a diverse selection of courses across various subjects and disciplines, from beginner essentials to advanced specializations.",
     icon: BookOpenIcon,
-    iconClassName:
-      "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    iconClassName: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
   },
   {
     title: "Expert Instructors",
     description:
       "Learn from industry experts and experienced educators who are passionate about teaching and dedicated to your growth.",
     icon: GraduationCapIcon,
-    iconClassName:
-      "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    iconClassName: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
   },
   {
     title: "Flexible Learning",
     description:
       "Access course materials anytime, anywhere, and learn at your own pace — on your schedule, on your terms.",
     icon: ClockIcon,
-    iconClassName:
-      "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    iconClassName: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
   },
   {
     title: "Interactive Content",
     description:
       "Engage with multimedia content, quizzes, and assignments designed to deepen understanding and improve retention.",
     icon: PlayCircleIcon,
-    iconClassName:
-      "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+    iconClassName: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
   },
   {
     title: "Community Support",
     description:
       "Join a vibrant community of learners to share knowledge, collaborate, ask questions, and grow together.",
     icon: UsersIcon,
-    iconClassName:
-      "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+    iconClassName: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
   },
   {
     title: "Certification",
     description:
       "Earn certificates upon course completion to showcase your achievements and stand out to employers and clients.",
     icon: AwardIcon,
-    iconClassName:
-      "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
+    iconClassName: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
   },
 ];
 
@@ -83,7 +77,7 @@ function FeatureCard({
           and fades smoothly toward the edges. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-xl text-foreground/[0.08] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-0 rounded-xl text-foreground/8 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
         style={{
           backgroundImage:
             "linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)",
@@ -120,7 +114,7 @@ export function Features() {
     <section className="relative overflow-hidden">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-primary/[0.02] to-transparent"
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-primary/5 via-primary/2 to-transparent"
       />
 
       <div className="mx-auto max-w-6xl space-y-12 px-4 py-16 md:px-6 md:py-24 lg:px-8">

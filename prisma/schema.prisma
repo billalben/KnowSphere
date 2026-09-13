@@ -197,7 +197,7 @@ model Course {
   courseReviews  CourseReview[]
   wishlistItems  WishlistItem[]
   certificates   Certificate[]
-  categories     Category[]       @relation("CourseCategories")
+  categories     Category[]      @relation("CourseCategories")
 
   stripePriceId String @unique
 }
@@ -234,9 +234,9 @@ model CourseChapter {
 model Lesson {
   id String @id @default(cuid())
 
-  title        String
-  description  String?
-  videoKey     String?
+  title       String
+  description String?
+  videoKey    String?
 
   position Int
 
