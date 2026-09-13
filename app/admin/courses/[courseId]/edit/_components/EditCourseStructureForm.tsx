@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { DragDropProvider } from "@dnd-kit/react";
 import { isSortable, useSortable } from "@dnd-kit/react/sortable";
 import {
@@ -198,14 +198,6 @@ export function EditCourseStructureForm({
   );
 
   const [chapters, setChapters] = useState<Chapter[]>(chaptersFromCourse);
-
-  // Sync local state when the server-fetched course changes (e.g. after the
-  // modals below call router.refresh() on a create/delete, or after a reorder
-  // round-trip). useState only consumes the initial value on mount, so without
-  // this the list would stay stale until a full page reload.
-  useEffect(() => {
-    setChapters(chaptersFromCourse);
-  }, [chaptersFromCourse]);
 
   const [, startChapterReorder] = useTransition();
   const [, startLessonReorder] = useTransition();

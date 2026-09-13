@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Loader2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -29,10 +29,6 @@ export function CommentForm({
 }: CommentFormProps) {
   const [value, setValue] = useState(defaultValue);
   const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    setValue(defaultValue);
-  }, [defaultValue]);
 
   const trimmed = value.trim();
   const initialTrimmed = defaultValue.trim();

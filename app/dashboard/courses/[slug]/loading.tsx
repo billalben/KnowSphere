@@ -3,18 +3,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CourseOverviewLoading() {
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-8 pb-12">
-      <Skeleton className="h-4 w-32" />
+    <div className="flex flex-1 flex-col space-y-6">
+      <div className="space-y-6">
+        <Skeleton className="h-4 w-32" />
 
-      <Skeleton className="aspect-video w-full rounded-xl" />
+        <Skeleton className="aspect-video w-full rounded-xl" />
 
-      <div className="space-y-3">
-        <Skeleton className="h-9 w-3/4" />
-        <Skeleton className="h-5 w-full" />
-        <Skeleton className="h-5 w-5/6" />
+        <div className="space-y-3">
+          <Skeleton className="h-9 w-3/4" />
+          <Skeleton className="h-5 w-full" />
+          <Skeleton className="h-5 w-5/6" />
+        </div>
+
+        <Skeleton className="h-11 w-48" />
       </div>
-
-      <Skeleton className="h-11 w-48" />
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">

@@ -25,7 +25,7 @@ export default async function ContactPage() {
        with the same w-screen + left-50% + -translate-x-50% trick used by the
        home Hero, so the dot grid + orbs + squares fill the full viewport
        even though <main> constrains its own width. */
-    <section className="relative w-screen left-1/2 -translate-x-1/2 flex min-h-[calc(100svh-4rem)] items-center justify-center overflow-hidden py-12">
+    <section className="relative w-screen left-1/2 -translate-x-1/2 flex min-h-[calc(100svh-4rem)] items-center justify-center overflow-hidden py-24">
       {/* Background layer — viewport-spanning decorative dots/orbs/squares. */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
         <svg
