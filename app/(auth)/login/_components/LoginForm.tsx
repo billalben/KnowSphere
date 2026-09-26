@@ -16,7 +16,11 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
-export function LoginForm() {
+interface LoginFormProps {
+  redirectTo?: string;
+}
+
+export function LoginForm({ redirectTo = "/" }: LoginFormProps) {
   const router = useRouter();
 
   const [githubPending, startGitHubTransition] = useTransition();
@@ -27,7 +31,7 @@ export function LoginForm() {
     startGitHubTransition(async () => {
       await authClient.signIn.social({
         provider: "github",
-        callbackURL: "/",
+        callbackURL: redirectTo,
         fetchOptions: {
           onSuccess: () => {
             toast.success("Successfully logged in!");
@@ -50,7 +54,9 @@ export function LoginForm() {
         fetchOptions: {
           onSuccess: () => {
             toast.success("OTP sent to your email!");
-            router.push(`verify-request?email=${encodeURIComponent(email)}`);
+            router.push(
+              `/verify-request?email=${encodeURIComponent(email)}&redirect=${encodeURIComponent(redirectTo)}`,
+            );
           },
           onError: (error) => {
             console.error("Error sending OTP:", error);

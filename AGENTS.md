@@ -24,22 +24,22 @@ Notes for OpenCode sessions working in this repo.
 ## Environment / env validation
 
 - All env vars are validated at build/runtime by `@t3-oss/env-nextjs` in `lib/env.ts` (zod). Missing/invalid vars fail fast — edit `lib/env.ts` when adding a var, do not read `process.env` directly in app code. (Update both `server` and the `experimental__runtimeEnv` map for client vars.)
-- Required server vars (also listed in `.env.example`): `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `RESEND_API_KEY`, `ARCJET_KEY`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ENDPOINT_URL_S3`, `AWS_ENDPOINT_URL_IAM`, `AWS_REGION`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`. Only the `NEXT_PUBLIC_*` (`NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES`) is exposed to the client.
+- Required server vars (also listed in `.env.example`): `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `ARCJET_KEY`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ENDPOINT_URL_S3`, `AWS_ENDPOINT_URL_IAM`, `AWS_REGION`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`. Only the `NEXT_PUBLIC_*` (`NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES`) is exposed to the client.
 - `.env` is gitignored but required locally. `.env.example` exists and is the canonical template — copy it to `.env` and fill in real values.
 
 ## Auth & middleware gotcha
 
-- Auth is `better-auth` (`lib/auth.ts`): Prisma adapter, GitHub social provider, `emailOTP` plugin sending via Resend, plus the `admin` plugin (sets `User.role` — see below). Handler at `app/api/auth/[...all]/route.ts` — uses the new `toNextJsHandler(auth.handler)` pattern and wraps POST with Arcjet (`detectBot` + sliding-window rate limit + `protectSignup` on `/api/auth/sign-up`). Client helpers in `lib/auth-client.ts`.
+- Auth is `better-auth` (`lib/auth.ts`): Prisma adapter, GitHub social provider, `emailOTP` plugin sending via Resend (`from: env.EMAIL_FROM`), plus the `admin` plugin (sets `User.role` — see below). Handler at `app/api/auth/[...all]/route.ts` — uses the new `toNextJsHandler(auth.handler)` pattern and wraps POST with Arcjet: `detectBot` plus a sliding-window rate limit on every POST, with tighter limits for OTP send (`/email-otp/send-verification-otp`) and OTP verify (`/sign-in/email-otp`), and `protectSignup` on `/api/auth/sign-up`. Client helpers in `lib/auth-client.ts`.
 - Two server-side gates exist — call the right one from the right surface:
   - `app/data/admin/require-admin.ts` (`requireAdmin()`): no session -> `redirect("/login")`; session but `role !== "admin"` -> `redirect("/not-admin")`.
   - `app/data/user/require-user.ts` (`requireUser()`): no session -> `redirect("/login")`; any signed-in user passes. Use this for learner-facing pages that should not be admin-gated.
-- **Middleware file is `proxy.ts`, not `middleware.ts`.** Next.js will not run it — the session redirect to `/login` for `/admin/*` and its `matcher` config are effectively dead. Do not assume `/admin` is server-gated; real route protection comes from `requireAdmin()` inside server components, route handlers, and server actions. Rename to `middleware.ts` only if the user asks.
+- **Middleware lives in `proxy.ts` (export `proxy`), not `middleware.ts`.** In Next.js 16 `middleware.ts` was renamed to `proxy.ts`, so this file **does** run. It gates `/admin/:path*` by session (redirect to `/login?redirect=…`) and role (redirect to `/not-admin`). `requireAdmin()` inside `app/admin/layout.tsx`, server components, route handlers, and server actions remains the authoritative gate — the proxy is a convenience layer, not a substitute.
 
 ## Routing & layout
 
 - App Router. Route groups: `app/(auth)/` (login, verify-request), `app/(public)/` (landing: home, `/courses`, `/courses/[slug]`, `/contact`, `/terms`, `/privacy`, `/license`, `/payment/{success,cancel}`, `/certificates/[code]`). Plain folders: `app/admin/` (dashboard, courses, projects, contact-messages) and `app/not-admin/`.
 - Admin layout (`app/admin/layout.tsx`) wraps everything under `/admin` with the shadcn sidebar/header in `app/admin/_components/`.
-- API routes: `app/api/auth/[...all]` (better-auth), `app/api/s3/upload` and `app/api/s3/delete` (presigned Tigris uploads), `app/api/arcjet/route.ts`, `app/api/webhook/stripe/route.ts` (Stripe checkout completion; forwards via `pnpm stripe:listen` in dev), `app/api/admin/activity/export/route.ts` (CSV export of admin activity log).
+- API routes: `app/api/auth/[...all]` (better-auth), `app/api/s3/upload` and `app/api/s3/delete` (presigned Tigris uploads), `app/api/webhook/stripe/route.ts` (Stripe checkout completion; forwards via `pnpm stripe:listen` in dev), `app/api/admin/activity/export/route.ts` (CSV export of admin activity log).
 - Default to **server components**; only add `"use client"` when you need state, effects, or browser-only APIs. Pair client-only subtrees with a server parent that passes plain props (see the FAQ pattern: `FAQ.tsx` server + `FaqList.tsx` client).
 
 ## Data fetchers & auth helpers
