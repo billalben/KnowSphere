@@ -3,6 +3,7 @@
 import { z } from "zod";
 
 import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
+import ip from "@arcjet/ip";
 import { request } from "@arcjet/next";
 import prisma from "@/lib/prisma";
 import { errorResponse, successResponse } from "@/lib/responses";
@@ -40,7 +41,11 @@ export async function submitContactMessage(values: unknown) {
   try {
     const req = await request();
     const session = await getOptionalSession();
-    const fingerprint = session?.user?.id ?? "anonymous";
+    // `request()` only returns headers/cookies, so resolve the client IP from
+    // the request headers instead of collapsing all anonymous callers into one
+    // shared rate-limit bucket.
+    const fingerprint =
+      session?.user?.id ?? (ip({ headers: req.headers ?? {} }) || "127.0.0.1");
 
     const decision = await aj.protect(req, { fingerprint });
     if (decision.isDenied()) {

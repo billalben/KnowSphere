@@ -4,17 +4,21 @@ import {
   CheckCircle2Icon,
   XCircleIcon,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { tryCatch } from "@/hooks/try-catch";
 import type {
   tUserLessonQuiz,
   tUserQuizAnswer,
   tUserQuizQuestion,
 } from "@/app/data/user/get-lesson-quiz";
 import { cn } from "@/lib/utils";
+
+import { gradeQuizAnswerAction, type tQuizGrade } from "../quiz-actions";
 
 interface QuizPlayerProps {
   quiz: tUserLessonQuiz;
@@ -24,31 +28,25 @@ export function QuizPlayer({ quiz }: QuizPlayerProps) {
   const [selections, setSelections] = useState<Record<string, Set<string>>>(
     {},
   );
-  const [checked, setChecked] = useState<Set<string>>(new Set());
+  const [results, setResults] = useState<Record<string, tQuizGrade>>({});
   const [step, setStep] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const totalQuestions = quiz.questions.length;
   const isLast = step === totalQuestions - 1;
   const currentQuestion = quiz.questions[step];
 
+  const checked = useMemo(
+    () => new Set(Object.keys(results)),
+    [results],
+  );
   const submittedCount = checked.size;
 
-  const correctCount = useMemo(() => {
-    let count = 0;
-    for (const q of quiz.questions) {
-      if (!checked.has(q.id)) continue;
-      const correctIds = new Set(
-        q.answers.filter((a) => a.isCorrect).map((a) => a.id),
-      );
-      const picked = selections[q.id] ?? new Set<string>();
-      const sameSize = picked.size === correctIds.size;
-      const sameMembers =
-        sameSize && Array.from(picked).every((id) => correctIds.has(id));
-      if (sameMembers) count += 1;
-    }
-    return count;
-  }, [checked, quiz.questions, selections]);
+  const correctCount = useMemo(
+    () => Object.values(results).filter((r) => r.isCorrect).length,
+    [results],
+  );
 
   function toggleSingle(questionId: string, answerId: string) {
     if (checked.has(questionId)) return;
@@ -70,11 +68,22 @@ export function QuizPlayer({ quiz }: QuizPlayerProps) {
 
   function submitCurrent() {
     if (!currentQuestion) return;
-    setChecked((prev) => {
-      if (prev.has(currentQuestion.id)) return prev;
-      const next = new Set(prev);
-      next.add(currentQuestion.id);
-      return next;
+    if (results[currentQuestion.id]) return;
+
+    const questionId = currentQuestion.id;
+    const selectedAnswerIds = Array.from(selections[questionId] ?? []);
+
+    startTransition(async () => {
+      const { data: grade, error } = await tryCatch(
+        gradeQuizAnswerAction({ questionId, selectedAnswerIds }),
+      );
+
+      if (error || !grade) {
+        toast.error("Could not grade your answer. Please try again.");
+        return;
+      }
+
+      setResults((prev) => ({ ...prev, [questionId]: grade }));
     });
   }
 
@@ -94,7 +103,7 @@ export function QuizPlayer({ quiz }: QuizPlayerProps) {
 
   function tryAgain() {
     setSelections({});
-    setChecked(new Set());
+    setResults({});
     setStep(0);
     setFinished(false);
   }
@@ -149,12 +158,15 @@ export function QuizPlayer({ quiz }: QuizPlayerProps) {
     selections[currentQuestion.id] ?? new Set<string>();
   const hasCurrentSelection = currentSelection.size > 0;
 
-  const primaryLabel = !isCurrentChecked
-    ? "Submit answer"
-    : isLast
-      ? "See result"
-      : "Next question";
-  const primaryDisabled = !isCurrentChecked && !hasCurrentSelection;
+  const primaryLabel = isPending
+    ? "Checking..."
+    : !isCurrentChecked
+      ? "Submit answer"
+      : isLast
+        ? "See result"
+        : "Next question";
+  const primaryDisabled =
+    isPending || (!isCurrentChecked && !hasCurrentSelection);
 
   return (
     <div className="flex flex-col gap-6">
@@ -182,6 +194,7 @@ export function QuizPlayer({ quiz }: QuizPlayerProps) {
           question={currentQuestion}
           selectedIds={currentSelection}
           revealed={isCurrentChecked}
+          grade={results[currentQuestion.id]}
           onSingleChange={(answerId) =>
             toggleSingle(currentQuestion.id, answerId)
           }
@@ -221,6 +234,7 @@ interface QuestionBodyProps {
   question: tUserQuizQuestion;
   selectedIds: Set<string>;
   revealed: boolean;
+  grade?: tQuizGrade;
   onSingleChange: (answerId: string) => void;
   onMultipleChange: (answerId: string) => void;
 }
@@ -229,6 +243,7 @@ function QuestionBody({
   question,
   selectedIds,
   revealed,
+  grade,
   onSingleChange,
   onMultipleChange,
 }: QuestionBodyProps) {
@@ -238,6 +253,7 @@ function QuestionBody({
         question={question}
         selectedIds={selectedIds}
         revealed={revealed}
+        grade={grade}
         onSingleChange={onSingleChange}
       />
     );
@@ -247,6 +263,7 @@ function QuestionBody({
       question={question}
       selectedIds={selectedIds}
       revealed={revealed}
+      grade={grade}
       onMultipleChange={onMultipleChange}
     />
   );
@@ -256,6 +273,7 @@ interface SingleBodyProps {
   question: tUserQuizQuestion;
   selectedIds: Set<string>;
   revealed: boolean;
+  grade?: tQuizGrade;
   onSingleChange: (answerId: string) => void;
 }
 
@@ -263,6 +281,7 @@ function SingleQuestionBody({
   question,
   selectedIds,
   revealed,
+  grade,
   onSingleChange,
 }: SingleBodyProps) {
   const value: string =
@@ -280,6 +299,8 @@ function SingleQuestionBody({
             answer={answer}
             isSelected={selectedIds.has(answer.id)}
             revealed={revealed}
+            isCorrect={grade?.correctAnswerIds.includes(answer.id)}
+            explanation={grade?.explanations[answer.id]}
             marker={
               <RadioGroupItem
                 value={answer.id}
@@ -298,6 +319,7 @@ interface MultipleBodyProps {
   question: tUserQuizQuestion;
   selectedIds: Set<string>;
   revealed: boolean;
+  grade?: tQuizGrade;
   onMultipleChange: (answerId: string) => void;
 }
 
@@ -305,6 +327,7 @@ function MultipleQuestionBody({
   question,
   selectedIds,
   revealed,
+  grade,
   onMultipleChange,
 }: MultipleBodyProps) {
   return (
@@ -317,6 +340,8 @@ function MultipleQuestionBody({
             answer={answer}
             isSelected={checked}
             revealed={revealed}
+            isCorrect={grade?.correctAnswerIds.includes(answer.id)}
+            explanation={grade?.explanations[answer.id]}
             marker={
               <Checkbox
                 checked={checked}
@@ -336,6 +361,8 @@ interface AnswerOptionProps {
   answer: tUserQuizAnswer;
   isSelected: boolean;
   revealed: boolean;
+  isCorrect: boolean | undefined;
+  explanation: string | undefined;
   marker: React.ReactNode;
 }
 
@@ -343,12 +370,14 @@ function AnswerOption({
   answer,
   isSelected,
   revealed,
+  isCorrect,
+  explanation,
   marker,
 }: AnswerOptionProps) {
-  const showAsCorrect = revealed && answer.isCorrect;
-  const showAsWrong = revealed && isSelected && !answer.isCorrect;
+  const showAsCorrect = revealed && isCorrect === true;
+  const showAsWrong = revealed && isSelected && isCorrect !== true;
   const showExplanation =
-    revealed && answer.explanation && (showAsCorrect || showAsWrong);
+    revealed && explanation && (showAsCorrect || showAsWrong);
 
   return (
     <li
@@ -362,7 +391,7 @@ function AnswerOption({
       <div className="flex items-start gap-3">
         <div className="flex h-9 items-center">{marker}</div>
         <span className="flex-1 text-sm">{answer.text}</span>
-        {revealed && answer.isCorrect && (
+        {revealed && isCorrect === true && (
           <CheckCircle2Icon className="mt-1 size-5 shrink-0 text-green-600 dark:text-green-400" />
         )}
         {showAsWrong && (
@@ -371,7 +400,7 @@ function AnswerOption({
       </div>
       {showExplanation && (
         <p className="ml-9 text-xs leading-relaxed text-muted-foreground">
-          {answer.explanation}
+          {explanation}
         </p>
       )}
     </li>

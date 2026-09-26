@@ -73,7 +73,7 @@ export async function createCourse(values: CourseSchemaType) {
       ...(stripeDescription !== undefined && { description: stripeDescription }),
       default_price_data: {
         currency: "usd",
-        unit_amount: courseFields.price * 100,
+        unit_amount: courseFields.priceCents,
       },
     });
 
@@ -116,7 +116,7 @@ export async function createCourse(values: CourseSchemaType) {
       metadata: {
         status: course.status,
         level: course.level,
-        price: course.price,
+        priceCents: course.priceCents,
         categories: categoryNames,
       },
     });

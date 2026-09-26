@@ -29,7 +29,10 @@ export const courseSchema = z.object({
     .optional()
     .nullable()
     .transform((v) => (v && v.length > 0 ? v : null)),
-  price: z.coerce.number().min(0, "Price must be at least 0"),
+  priceCents: z.coerce
+    .number()
+    .int("Price must be a whole number of cents")
+    .min(0, "Price must be at least 0"),
   duration: z.coerce.number().min(1, "Duration must be at least 1 minute"),
   level: z.enum(ECourseLevel).default(ECourseLevel.BEGINNER),
   status: z.enum(ECourseStatus).default(ECourseStatus.DRAFT),

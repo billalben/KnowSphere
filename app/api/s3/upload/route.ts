@@ -16,6 +16,34 @@ export const fileUploadSchema = z.object({
   isImage: z.boolean().optional(),
 });
 
+const MAX_IMAGE_BYTES = 3 * 1024 * 1024; // 3MB
+const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100MB
+
+const IMAGE_CONTENT_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+  "image/avif",
+]);
+
+const VIDEO_CONTENT_TYPES = new Set([
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+]);
+
+// Strip directory components and anything that isn't URL/object-key safe so a
+// caller can't smuggle path separators or `..` into the S3 key.
+function sanitizeFileName(fileName: string): string {
+  const base = fileName.split(/[\\/]/).pop() ?? "file";
+  const cleaned = base
+    .replace(/[^A-Za-z0-9._-]/g, "-")
+    .replace(/^[.-]+/, "")
+    .slice(0, 100);
+  return cleaned || "file";
+}
+
 const aj = arcjet
   .withRule(
     detectBot({
@@ -54,9 +82,34 @@ export async function POST(request: Request) {
       );
     }
 
-    const { fileName, contentType, size } = validation.data;
+    const { fileName, contentType, size, isImage } = validation.data;
 
-    const uniqueKey = `${uuidv4()}-${fileName}`;
+    const isVideo = contentType.startsWith("video/");
+    const allowedTypes = isVideo ? VIDEO_CONTENT_TYPES : IMAGE_CONTENT_TYPES;
+    const maxBytes = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+
+    if (!allowedTypes.has(contentType)) {
+      return NextResponse.json(
+        { error: `Unsupported ${isVideo ? "video" : "image"} content type` },
+        { status: 400 },
+      );
+    }
+
+    if (typeof isImage === "boolean" && isImage === isVideo) {
+      return NextResponse.json(
+        { error: "Content type does not match the upload kind" },
+        { status: 400 },
+      );
+    }
+
+    if (size > maxBytes) {
+      return NextResponse.json(
+        { error: `File too large. Maximum ${maxBytes / 1024 / 1024}MB` },
+        { status: 400 },
+      );
+    }
+
+    const uniqueKey = `${uuidv4()}-${sanitizeFileName(fileName)}`;
 
     const command = new PutObjectCommand({
       Bucket: env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES,

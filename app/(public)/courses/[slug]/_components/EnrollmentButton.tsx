@@ -16,7 +16,7 @@ interface EnrollmentButtonProps {
   slug: string;
   isEnrolled: boolean;
   isSignedIn: boolean;
-  price: number;
+  priceCents: number;
 }
 
 export function EnrollmentButton({
@@ -24,12 +24,12 @@ export function EnrollmentButton({
   slug,
   isEnrolled,
   isSignedIn,
-  price,
+  priceCents,
 }: EnrollmentButtonProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const isFree = !price;
+  const isFree = !priceCents;
 
   if (!isSignedIn) {
     return (

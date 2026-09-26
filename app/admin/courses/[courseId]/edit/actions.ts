@@ -70,7 +70,7 @@ export async function updateCourse(courseId: string, values: CourseSchemaType) {
         slug: true,
         description: true,
         smallDesc: true,
-        price: true,
+        priceCents: true,
         duration: true,
         level: true,
         status: true,

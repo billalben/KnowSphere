@@ -18,11 +18,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import {
-  formatDate,
-  formatDuration,
-  formatPrice,
-} from "../_lib/format-duration";
+import { formatDate, formatDuration } from "../_lib/format-duration";
+import { formatPrice } from "@/lib/format-price";
 import { EnrollmentButton } from "./EnrollmentButton";
 import { WishlistButton } from "./WishlistButton";
 
@@ -92,7 +89,7 @@ export function CourseSummaryCard({
   const levelLabel =
     course.level.charAt(0) + course.level.slice(1).toLowerCase();
   const chaptersCount = course.courseChapters.length;
-  const isFree = !course.price;
+  const isFree = !course.priceCents;
 
   return (
     <Card className="overflow-hidden shadow-sm lg:shadow-md">
@@ -113,11 +110,11 @@ export function CourseSummaryCard({
         <div className="space-y-2">
           <div className="flex items-baseline gap-2">
             <CardTitle className="text-3xl font-bold tracking-tight">
-              {formatPrice(course.price)}
+              {formatPrice(course.priceCents)}
             </CardTitle>
             {!isFree && (
               <span className="text-sm text-muted-foreground line-through">
-                ${(course.price * 1.5).toFixed(2)}
+                ${((course.priceCents * 1.5) / 100).toFixed(2)}
               </span>
             )}
           </div>
@@ -143,7 +140,7 @@ export function CourseSummaryCard({
             slug={slug}
             isEnrolled={isEnrolled}
             isSignedIn={isSignedIn}
-            price={course.price}
+            priceCents={course.priceCents}
           />
           <WishlistButton
             courseId={course.id}

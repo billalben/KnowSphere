@@ -13,7 +13,7 @@ export type tWishlistCourse = {
   duration: number;
   level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
-  price: number;
+  priceCents: number;
   imageUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -65,7 +65,7 @@ export async function getMyWishlistCourses({
             duration: true,
             level: true,
             status: true,
-            price: true,
+            priceCents: true,
             fileKey: true,
             createdAt: true,
             updatedAt: true,
@@ -113,7 +113,7 @@ export async function getMyWishlistCourses({
       duration: row.course.duration,
       level: row.course.level,
       status: row.course.status,
-      price: row.course.price,
+      priceCents: row.course.priceCents,
       imageUrl: imageUrls[i],
       createdAt: row.course.createdAt,
       updatedAt: row.course.updatedAt,

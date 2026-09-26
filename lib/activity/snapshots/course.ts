@@ -10,7 +10,7 @@ export type CourseAuditSnapshot = {
   slug: string;
   description: string;
   smallDesc: string;
-  price: number;
+  priceCents: number;
   duration: number;
   level: CourseLevel;
   status: CourseStatus;
@@ -25,7 +25,7 @@ export type CourseRowInput = Pick<
   | "slug"
   | "description"
   | "smallDesc"
-  | "price"
+  | "priceCents"
   | "duration"
   | "level"
   | "status"
@@ -41,7 +41,7 @@ export function snapshotCourse(row: CourseRowInput): CourseAuditSnapshot {
     slug: row.slug,
     description: row.description ?? "",
     smallDesc: row.smallDesc,
-    price: row.price,
+    priceCents: row.priceCents,
     duration: row.duration,
     level: row.level,
     status: row.status,
@@ -59,7 +59,7 @@ export const COURSE_AUDIT_FIELDS: ReadonlyArray<FieldDescriptor<CourseAuditSnaps
     pick: (r) => r.smallDesc,
   },
   { key: "description", label: "description", pick: (r) => r.description },
-  { key: "price", label: "price", pick: (r) => r.price },
+  { key: "priceCents", label: "price", pick: (r) => r.priceCents },
   { key: "level", label: "level", pick: (r) => r.level },
   { key: "status", label: "status", pick: (r) => r.status },
   { key: "fileKey", label: "thumbnail", pick: (r) => r.fileKey },

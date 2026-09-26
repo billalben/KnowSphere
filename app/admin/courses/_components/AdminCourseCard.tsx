@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { formatPrice } from "@/lib/format-price";
 import {
   ClockIcon,
   EyeIcon,
@@ -32,11 +33,6 @@ function formatDuration(minutes: number): string {
   if (hours === 0) return `${mins} min`;
   if (mins === 0) return `${hours}h`;
   return `${hours}h ${mins}min`;
-}
-
-function formatPrice(price: number): string {
-  if (price === 0 || price === null || price === undefined) return "Free";
-  return `$${price.toFixed(2)}`;
 }
 
 export function AdminCourseCard({ course }: iAppProps) {
@@ -113,7 +109,7 @@ export function AdminCourseCard({ course }: iAppProps) {
             <span>{formatDuration(course.duration)}</span>
           </div>
           <span className="text-sm font-semibold tabular-nums">
-            {formatPrice(course.price)}
+            {formatPrice(course.priceCents)}
           </span>
         </div>
       </div>

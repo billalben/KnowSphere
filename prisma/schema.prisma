@@ -178,9 +178,9 @@ model Course {
   description String?
   smallDesc   String
 
-  fileKey  String?
-  price    Float
-  duration Int // duration in minutes
+  fileKey    String?
+  priceCents Int // price in integer cents
+  duration   Int // duration in minutes
   level    CourseLevel @default(BEGINNER)
 
   slug   String       @unique
@@ -326,6 +326,15 @@ enum EnrollmentStatus {
   Pending
   Active
   Cancelled
+}
+
+// Records processed Stripe webhook event IDs so replayed events are no-ops.
+model ProcessedWebhookEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now())
+
+  @@map("processed_webhook_event")
 }
 
 enum QuizQuestionType {

@@ -70,9 +70,9 @@ function sortCourses(courses: tCourse[], sort: SortKey): tCourse[] {
           b.updatedAt.getTime() - a.updatedAt.getTime(),
       );
     case "price-asc":
-      return next.sort((a, b) => a.price - b.price);
+      return next.sort((a, b) => a.priceCents - b.priceCents);
     case "price-desc":
-      return next.sort((a, b) => b.price - a.price);
+      return next.sort((a, b) => b.priceCents - a.priceCents);
     case "duration-asc":
       return next.sort((a, b) => a.duration - b.duration);
     case "duration-desc":

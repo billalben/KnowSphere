@@ -22,7 +22,7 @@ export type tAnalyticsRecentCourse = {
   title: string;
   smallDesc: string;
   imageUrl: string | null;
-  price: number;
+  priceCents: number;
   duration: number;
   level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
   slug: string;
@@ -125,7 +125,7 @@ export async function adminGetAnalytics(): Promise<tAnalytics> {
         title: true,
         smallDesc: true,
         fileKey: true,
-        price: true,
+        priceCents: true,
         duration: true,
         level: true,
         slug: true,
@@ -215,7 +215,7 @@ export async function adminGetAnalytics(): Promise<tAnalytics> {
       title: c.title,
       smallDesc: c.smallDesc,
       imageUrl: recentImageUrls[i],
-      price: c.price,
+      priceCents: c.priceCents,
       duration: c.duration,
       level: c.level,
       slug: c.slug,
