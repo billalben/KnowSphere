@@ -1,9 +1,13 @@
 import "server-only";
 
 import prisma from "@/lib/prisma";
+import { WISHLIST_PAGE_SIZE } from "@/lib/constants/wishlist";
+import { normalizePagination } from "@/lib/pagination";
 import { getDownloadUrls } from "@/lib/s3/get-download-url";
 
 import { requireUser } from "./require-user";
+
+const MAX_PAGE_SIZE = 50;
 
 export type tWishlistCourse = {
   id: string;
@@ -36,13 +40,17 @@ export type tWishlistPage = {
 
 export async function getMyWishlistCourses({
   page = 1,
-  pageSize = 10,
+  pageSize = WISHLIST_PAGE_SIZE,
 }: {
   page?: number;
   pageSize?: number;
 }): Promise<tWishlistPage> {
   const session = await requireUser();
-  const skip = (page - 1) * pageSize;
+  const { page: safePage, pageSize: safePageSize, skip, take } =
+    normalizePagination(
+      { page, pageSize },
+      { defaultPageSize: WISHLIST_PAGE_SIZE, maxPageSize: MAX_PAGE_SIZE },
+    );
 
   const [rows, total] = await Promise.all([
     prisma.wishlistItem.findMany({
@@ -52,7 +60,7 @@ export async function getMyWishlistCourses({
       },
       orderBy: { createdAt: "desc" },
       skip,
-      take: pageSize,
+      take,
       select: {
         id: true,
         createdAt: true,
@@ -131,5 +139,5 @@ export async function getMyWishlistCourses({
     };
   });
 
-  return { items, total, page, pageSize };
+  return { items, total, page: safePage, pageSize: safePageSize };
 }

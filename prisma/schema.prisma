@@ -46,6 +46,7 @@ model User {
   banExpires DateTime?
 
   @@unique([email])
+  @@index([createdAt])
   @@map("user")
 }
 
@@ -200,6 +201,8 @@ model Course {
   categories     Category[]      @relation("CourseCategories")
 
   stripePriceId String @unique
+
+  @@index([createdAt])
 }
 
 model Category {
@@ -320,6 +323,7 @@ model Enrollment {
   userId String
 
   @@unique([userId, courseId])
+  @@index([createdAt])
 }
 
 enum EnrollmentStatus {

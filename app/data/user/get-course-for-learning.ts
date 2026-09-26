@@ -3,7 +3,7 @@ import "server-only";
 import { notFound, redirect } from "next/navigation";
 
 import prisma from "@/lib/prisma";
-import { getDownloadUrl, getDownloadUrls } from "@/lib/s3/get-download-url";
+import { getDownloadUrl } from "@/lib/s3/get-download-url";
 import { requireUser } from "./require-user";
 
 export type tCourseForLearningLesson = {
@@ -34,8 +34,14 @@ export type tCourseForLearning = {
 
 export async function getCourseForLearning({
   slug,
+  currentLessonId,
 }: {
   slug: string;
+  /**
+   * When set, only this lesson's video is signed. Signing every lesson's video
+   * on every call is wasteful and hands out shareable URLs for the whole course.
+   */
+  currentLessonId?: string;
 }): Promise<tCourseForLearning> {
   const session = await requireUser();
 
@@ -96,12 +102,14 @@ export async function getCourseForLearning({
 
   const lessons = course.courseChapters.flatMap((c) => c.lessons);
 
-  const [imageUrl, videoUrls] = await Promise.all([
-    getDownloadUrl(course.fileKey),
-    getDownloadUrls(lessons.map((l) => l.videoKey)),
-  ]);
+  const currentVideoKey = currentLessonId
+    ? (lessons.find((l) => l.id === currentLessonId)?.videoKey ?? null)
+    : null;
 
-  let cursor = 0;
+  const [imageUrl, currentVideoUrl] = await Promise.all([
+    getDownloadUrl(course.fileKey),
+    getDownloadUrl(currentVideoKey),
+  ]);
 
   return {
     id: course.id,
@@ -114,17 +122,14 @@ export async function getCourseForLearning({
       id: chapter.id,
       title: chapter.title,
       position: chapter.position,
-      lessons: chapter.lessons.map((lesson) => {
-        const li = cursor++;
-        return {
-          id: lesson.id,
-          title: lesson.title,
-          description: lesson.description,
-          videoUrl: videoUrls[li] ?? null,
-          position: lesson.position,
-          completed: lesson.lessonProgress[0]?.completed ?? false,
-        };
-      }),
+      lessons: chapter.lessons.map((lesson) => ({
+        id: lesson.id,
+        title: lesson.title,
+        description: lesson.description,
+        videoUrl: lesson.id === currentLessonId ? currentVideoUrl : null,
+        position: lesson.position,
+        completed: lesson.lessonProgress[0]?.completed ?? false,
+      })),
     })),
   };
 }

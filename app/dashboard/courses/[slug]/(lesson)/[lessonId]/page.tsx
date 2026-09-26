@@ -17,7 +17,7 @@ interface PageParams {
 
 export default async function LessonPlayerPage({ params }: PageParams) {
   const { slug, lessonId } = await params;
-  const course = await getCourseForLearning({ slug });
+  const course = await getCourseForLearning({ slug, currentLessonId: lessonId });
 
   const lessons = course.courseChapters.flatMap((chapter) => chapter.lessons);
   const currentIndex = lessons.findIndex((lesson) => lesson.id === lessonId);

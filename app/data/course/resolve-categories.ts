@@ -79,16 +79,36 @@ export async function resolveCategories(
       ).map((c) => c.slug),
     );
 
-    for (const name of toCreate) {
+    // Precompute slugs sequentially (no DB round-trips), then insert in one
+    // statement. `skipDuplicates` absorbs races where a concurrent request
+    // created the same category/slug first.
+    const createData = toCreate.map((name) => {
       const base = deriveBaseSlug(name);
       const slug = pickAvailableSlug(base, takenSlugs);
       takenSlugs.add(slug);
+      return { name, slug };
+    });
 
-      const created = await client.category.create({
-        data: { name, slug },
-        select: { id: true, name: true, slug: true },
-      });
-      resolved.push(created);
+    await client.category.createMany({
+      data: createData,
+      skipDuplicates: true,
+    });
+
+    const createdRows = await client.category.findMany({
+      where: {
+        OR: toCreate.map((name) => ({
+          name: { equals: name, mode: "insensitive" as const },
+        })),
+      },
+      select: { id: true, name: true, slug: true },
+    });
+
+    const createdByLowercase = new Map(
+      createdRows.map((c) => [c.name.toLowerCase(), c]),
+    );
+    for (const name of toCreate) {
+      const row = createdByLowercase.get(name.toLowerCase());
+      if (row) resolved.push(row);
     }
   }
 

@@ -56,6 +56,13 @@ export type tAnalytics = {
   recentCourses: tAnalyticsRecentCourse[];
 };
 
+type DayCountRow = { day: Date; count: number };
+type DayEnrollmentRow = {
+  day: Date;
+  enrollments: number;
+  revenue: number;
+};
+
 function startOfDayUTC(d: Date): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 }
@@ -90,10 +97,10 @@ export async function adminGetAnalytics(): Promise<tAnalytics> {
     pendingEnrollments,
     contactMessages,
     revenueAggregate,
-    recentUsers,
-    recentCoursesAll,
-    recentEnrollments,
     recentCourses,
+    userDayRows,
+    courseDayRows,
+    enrollmentDayRows,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.course.count(),
@@ -104,18 +111,6 @@ export async function adminGetAnalytics(): Promise<tAnalytics> {
     prisma.enrollment.aggregate({
       _sum: { amount: true },
       where: { status: "Active" },
-    }),
-    prisma.user.findMany({
-      where: { createdAt: { gte: startDate } },
-      select: { createdAt: true },
-    }),
-    prisma.course.findMany({
-      where: { createdAt: { gte: startDate } },
-      select: { createdAt: true },
-    }),
-    prisma.enrollment.findMany({
-      where: { createdAt: { gte: startDate } },
-      select: { createdAt: true, amount: true, status: true },
     }),
     prisma.course.findMany({
       take: 5,
@@ -133,18 +128,41 @@ export async function adminGetAnalytics(): Promise<tAnalytics> {
         createdAt: true,
       },
     }),
+    // Aggregate per day in Postgres so we only move ~30 rows per metric instead
+    // of every row created in the window.
+    prisma.$queryRaw<DayCountRow[]>`
+      SELECT date_trunc('day', "createdAt") AS day, count(*)::int AS count
+      FROM "user"
+      WHERE "createdAt" >= ${startDate}
+      GROUP BY 1
+      ORDER BY 1
+    `,
+    prisma.$queryRaw<DayCountRow[]>`
+      SELECT date_trunc('day', "createdAt") AS day, count(*)::int AS count
+      FROM "Course"
+      WHERE "createdAt" >= ${startDate}
+      GROUP BY 1
+      ORDER BY 1
+    `,
+    prisma.$queryRaw<DayEnrollmentRow[]>`
+      SELECT date_trunc('day', "createdAt") AS day,
+             count(*)::int AS enrollments,
+             COALESCE(SUM(CASE WHEN status = 'Active' THEN amount ELSE 0 END), 0)::int AS revenue
+      FROM "Enrollment"
+      WHERE "createdAt" >= ${startDate}
+      GROUP BY 1
+      ORDER BY 1
+    `,
   ]);
 
   const userBuckets = buildEmptyBuckets(DAYS);
-  for (const u of recentUsers) {
-    const key = isoDay(startOfDayUTC(u.createdAt));
-    userBuckets.set(key, (userBuckets.get(key) ?? 0) + 1);
+  for (const row of userDayRows) {
+    userBuckets.set(isoDay(startOfDayUTC(row.day)), row.count);
   }
 
   const courseBuckets = buildEmptyBuckets(DAYS);
-  for (const c of recentCoursesAll) {
-    const key = isoDay(startOfDayUTC(c.createdAt));
-    courseBuckets.set(key, (courseBuckets.get(key) ?? 0) + 1);
+  for (const row of courseDayRows) {
+    courseBuckets.set(isoDay(startOfDayUTC(row.day)), row.count);
   }
 
   const enrollmentBuckets = buildEmptyBuckets(DAYS);
@@ -161,28 +179,36 @@ export async function adminGetAnalytics(): Promise<tAnalytics> {
     });
   }
 
-  for (const e of recentEnrollments) {
-    const key = isoDay(startOfDayUTC(e.createdAt));
-    enrollmentBuckets.set(key, (enrollmentBuckets.get(key) ?? 0) + 1);
-    if (e.status === "Active") {
-      revenueBuckets.set(key, (revenueBuckets.get(key) ?? 0) + e.amount);
-    }
+  for (const row of enrollmentDayRows) {
+    const key = isoDay(startOfDayUTC(row.day));
+    enrollmentBuckets.set(key, row.enrollments);
+    revenueBuckets.set(key, row.revenue);
+
     const trendPoint = trendBuckets.get(key);
     if (trendPoint) {
-      trendPoint.enrollments += 1;
-      if (e.status === "Active") {
-        trendPoint.revenue += e.amount;
-      }
+      trendPoint.enrollments += row.enrollments;
+      trendPoint.revenue += row.revenue;
     }
   }
 
   const totalRevenueCents = revenueAggregate._sum.amount ?? 0;
-  const newRevenueCentsThisPeriod = Array.from(revenueBuckets.values()).reduce(
-    (acc, v) => acc + v,
+  const newUsersThisPeriod = userDayRows.reduce((acc, r) => acc + r.count, 0);
+  const newCoursesThisPeriod = courseDayRows.reduce(
+    (acc, r) => acc + r.count,
+    0,
+  );
+  const newEnrollmentsThisPeriod = enrollmentDayRows.reduce(
+    (acc, r) => acc + r.enrollments,
+    0,
+  );
+  const newRevenueCentsThisPeriod = enrollmentDayRows.reduce(
+    (acc, r) => acc + r.revenue,
     0,
   );
 
-  const sparkPointsFromBuckets = (buckets: Map<string, number>): tAnalyticsSparkPoint[] =>
+  const sparkPointsFromBuckets = (
+    buckets: Map<string, number>,
+  ): tAnalyticsSparkPoint[] =>
     Array.from(buckets.entries()).map(([date, value]) => ({ date, value }));
 
   const recentImageUrls = await getDownloadUrls(
@@ -198,9 +224,9 @@ export async function adminGetAnalytics(): Promise<tAnalytics> {
       pendingEnrollments,
       contactMessages,
       totalRevenueCents,
-      newUsersThisPeriod: recentUsers.length,
-      newCoursesThisPeriod: recentCoursesAll.length,
-      newEnrollmentsThisPeriod: recentEnrollments.length,
+      newUsersThisPeriod,
+      newCoursesThisPeriod,
+      newEnrollmentsThisPeriod,
       newRevenueCentsThisPeriod,
     },
     sparklines: {

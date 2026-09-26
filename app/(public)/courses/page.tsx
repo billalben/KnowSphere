@@ -1,10 +1,16 @@
 import { Badge } from "@/components/ui/badge";
 import { BookOpenIcon, SparklesIcon } from "lucide-react";
+import { Suspense } from "react";
 
-import { getAllCourses } from "@/app/data/course/get-all-courses";
+import { getCoursesPage } from "@/app/data/course/get-all-courses";
 import { CoursesExplorer } from "./_components/CoursesExplorer";
 import { CoursesExplorerSkeleton } from "./_components/CoursesExplorerSkeleton";
-import { Suspense } from "react";
+import {
+  LEVELS,
+  SORTS,
+  type LevelFilter,
+  type SortKey,
+} from "./_lib/courses-filters";
 
 export const metadata = {
   title: "Courses | KnowSphere",
@@ -12,8 +18,30 @@ export const metadata = {
     "Browse our published courses and start learning something new today.",
 };
 
-export default async function PublicCoursesPage() {
-  const courses = await getAllCourses();
+interface PublicCoursesPageProps {
+  searchParams: Promise<{
+    q?: string;
+    level?: string;
+    sort?: string;
+    page?: string;
+  }>;
+}
+
+export default async function PublicCoursesPage({
+  searchParams,
+}: PublicCoursesPageProps) {
+  const params = await searchParams;
+
+  const q = typeof params.q === "string" ? params.q : "";
+  const level = LEVELS.includes(params.level as LevelFilter)
+    ? (params.level as LevelFilter)
+    : "All";
+  const sort = SORTS.includes(params.sort as SortKey)
+    ? (params.sort as SortKey)
+    : "newest";
+  const page = Number.parseInt(params.page ?? "1", 10);
+
+  const catalog = await getCoursesPage({ q, level, sort, page });
 
   return (
     <div className="space-y-12 pb-12 md:pb-16">
@@ -41,15 +69,17 @@ export default async function PublicCoursesPage() {
           <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2">
             <BookOpenIcon className="size-4" />
             <span className="tabular-nums font-medium text-foreground">
-              {courses.length}
+              {catalog.total}
             </span>
-            <span>{courses.length === 1 ? "course" : "courses"} available</span>
+            <span>
+              {catalog.total === 1 ? "course" : "courses"} available
+            </span>
           </div>
         </div>
       </section>
 
       <Suspense fallback={<CoursesExplorerSkeleton />}>
-        <CoursesExplorer courses={courses} />
+        <CoursesExplorer catalog={catalog} />
       </Suspense>
     </div>
   );

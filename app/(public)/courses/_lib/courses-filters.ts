@@ -1,5 +1,3 @@
-import { parseAsString, parseAsStringLiteral } from "nuqs";
-
 export const LEVELS = ["All", "Beginner", "Intermediate", "Advanced"] as const;
 export const SORTS = [
   "newest",
@@ -31,11 +29,5 @@ export const SORT_OPTIONS = SORTS.map((value) => ({
   value,
   label: SORT_LABELS[value],
 }));
-
-export const coursesSearchParams = {
-  q: parseAsString.withDefault(""),
-  level: parseAsStringLiteral(LEVELS).withDefault("All"),
-  sort: parseAsStringLiteral(SORTS).withDefault("newest"),
-};
 
 export const DEFAULT_VIEW: ViewMode = "grid";

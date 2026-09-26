@@ -1,10 +1,14 @@
 import { type Metadata } from "next";
 
 import { getCourseBySlug } from "@/app/data/course/get-course-by-slug";
-import { getCourseRatingAggregate } from "@/app/data/course/get-course-reviews";
+import {
+  getCourseRatingAggregate,
+  getCourseReviews,
+} from "@/app/data/course/get-course-reviews";
 import { isCourseWishlisted } from "@/app/data/course/get-wishlist-state";
 import { checkIfCourseBought } from "@/app/data/user/user-is-enrolled";
 import { getOptionalSession } from "@/app/(public)/_lib/get-optional-session";
+import { REVIEW_PAGE_SIZE } from "@/lib/constants/reviews";
 import prisma from "@/lib/prisma";
 import { CoverImage } from "./_components/CoverImage";
 import { CourseCurriculum } from "./_components/CourseCurriculum";
@@ -37,8 +41,15 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
   const currentUserId = session?.user?.id ?? null;
   const isSignedIn = !!session?.user;
 
-  const [isEnrolled, aggregate, isWishlisted, myCertificate] = await Promise.all([
-    checkIfCourseBought({ courseId: course.id }),
+  const [
+    isEnrolled,
+    aggregate,
+    isWishlisted,
+    myCertificate,
+    reviewsPage,
+    myReviewRow,
+  ] = await Promise.all([
+    checkIfCourseBought({ courseId: course.id, userId: currentUserId }),
     getCourseRatingAggregate({ courseId: course.id }),
     currentUserId
       ? isCourseWishlisted({ courseId: course.id, userId: currentUserId })
@@ -54,6 +65,32 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
           select: { verificationCode: true },
         })
       : Promise.resolve(null),
+    getCourseReviews({
+      courseId: course.id,
+      page: 1,
+      pageSize: REVIEW_PAGE_SIZE,
+    }),
+    currentUserId
+      ? prisma.courseReview.findUnique({
+          where: {
+            userId_courseId: {
+              userId: currentUserId,
+              courseId: course.id,
+            },
+          },
+          select: {
+            id: true,
+            rating: true,
+            comment: true,
+            isEdited: true,
+            createdAt: true,
+            updatedAt: true,
+            user: {
+              select: { id: true, name: true, image: true, role: true },
+            },
+          },
+        })
+      : Promise.resolve(null),
   ]);
 
   const totalLessons = course.courseChapters.reduce(
@@ -61,8 +98,21 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
     0,
   );
 
-  const myReview = currentUserId
-    ? course.courseReviews.find((r) => r.author.id === currentUserId) ?? null
+  const myReview = myReviewRow
+    ? {
+        id: myReviewRow.id,
+        rating: myReviewRow.rating,
+        comment: myReviewRow.comment,
+        isEdited: myReviewRow.isEdited,
+        createdAt: myReviewRow.createdAt,
+        updatedAt: myReviewRow.updatedAt,
+        author: {
+          id: myReviewRow.user.id,
+          name: myReviewRow.user.name,
+          image: myReviewRow.user.image,
+          role: myReviewRow.user.role,
+        },
+      }
     : null;
 
   return (
@@ -81,8 +131,8 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
             courseId={course.id}
             isEnrolled={isEnrolled}
             currentUserId={currentUserId}
-            initialReviews={course.courseReviews}
-            initialTotal={course.courseReviews.length}
+            initialReviews={reviewsPage.items}
+            initialTotal={reviewsPage.total}
             initialAvg={aggregate.avg}
             initialCount={aggregate.count}
             myReview={myReview}
