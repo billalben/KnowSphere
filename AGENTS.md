@@ -24,7 +24,7 @@ Notes for OpenCode sessions working in this repo.
 ## Environment / env validation
 
 - All env vars are validated at build/runtime by `@t3-oss/env-nextjs` in `lib/env.ts` (zod). Missing/invalid vars fail fast — edit `lib/env.ts` when adding a var, do not read `process.env` directly in app code. (Update both `server` and the `experimental__runtimeEnv` map for client vars.)
-- Required server vars (also listed in `.env.example`): `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `ARCJET_KEY`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ENDPOINT_URL_S3`, `AWS_ENDPOINT_URL_IAM`, `AWS_REGION`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`. Only the `NEXT_PUBLIC_*` (`NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES`) is exposed to the client.
+- Required server vars (also listed in `.env.example`): `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `ARCJET_KEY`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ENDPOINT_URL_S3`, `AWS_REGION`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`. Only the `NEXT_PUBLIC_*` (`NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES`) is exposed to the client.
 - `.env` is gitignored but required locally. `.env.example` exists and is the canonical template — copy it to `.env` and fill in real values.
 
 ## Auth & middleware gotcha
@@ -66,10 +66,18 @@ Notes for OpenCode sessions working in this repo.
 
 ## Image / S3 (Tigris)
 
-- `next.config.ts` allows `images.remotePatterns` for `${NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES}.t3.tigrisfiles.io`.
+- `next.config.ts` allows `images.remotePatterns` for `${NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES}.<host>`, where `<host>` is derived from `AWS_ENDPOINT_URL_S3` (currently `t3.storage.dev`). Presigned URLs are generated from that same endpoint, so the two stay in sync.
 - Files are uploaded via presigned URLs from `/api/s3/upload`, stored on Tigris (S3-compatible) via `@aws-sdk/client-s3` + `@aws-sdk/s3-request-presigner` (`lib/S3Client.ts`).
 - Stale `PendingUpload` rows/objects are swept by `sweepOrphanUploads` (`lib/s3/discard-upload.ts`). Today it is **manual-only**, triggered by the admin cleanup button (`cleanupOrphanUploadsAction`); it is not scheduled. If you add scheduling, expose it via a cron route instead of changing the manual path.
 
 ## Versions that bite
 
-- Next.js **16.1.1**, React **19.2.3**, Prisma **^7.8.0** (new client generator API), better-auth **^1.4.10**, Tailwind **v4**, shadcn **^3.6.2**. Do not assume v3/v15 idioms; copy the patterns already in the repo as reference.
+- Next.js **16.1.1**, React **19.2.3**, Prisma **^7.9.1** (new client generator API), better-auth **^1.7.1**, Tailwind **v4**, shadcn **^3.8.5**. Do not assume v3/v15 idioms; copy the patterns already in the repo as reference.
+
+## Conventions (avoid regressions)
+
+- Never read `process.env` in app code — go through `lib/env.ts` (add the var there and to `.env.example`; update `experimental__runtimeEnv` for `NEXT_PUBLIC_*`).
+- Money is integer cents end-to-end (`Course.priceCents`, `Enrollment.amount`); convert to/from dollars only at the display/input edge.
+- Every admin page/mutation starts with `await requireAdmin()`. The `proxy.ts` gate is a convenience redirect, not the authorisation boundary.
+- Rate-limit auth and public-write endpoints by IP (Arcjet `fixedWindow`) so anonymous callers can't share one bucket.
+- Grade and authorise on the server; never ship secrets or quiz `isCorrect` flags to the client.
