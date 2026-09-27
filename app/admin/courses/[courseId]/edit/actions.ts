@@ -1,6 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { Prisma } from "@/lib/generated/prisma/client";
 import { errorResponse, successResponse } from "@/lib/responses";
 import {
   ChapterSchemaType,
@@ -10,6 +11,7 @@ import {
   courseSchema,
   lessonSchema,
 } from "@/lib/zodSchemas";
+import { deriveCourseSlug } from "@/lib/formatSlug";
 import { z } from "zod";
 import { requireAdmin } from "@/app/data/admin/require-admin";
 import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
@@ -61,13 +63,27 @@ export async function updateCourse(courseId: string, values: CourseSchemaType) {
       return errorResponse("Too many requests", null);
     }
 
-    const validatedData = courseSchema.safeParse(values);
+    const validatedData = courseSchema.safeParse({
+      ...values,
+      slug: deriveCourseSlug(values.slug, values.title),
+    });
 
     if (!validatedData.success) {
       return errorResponse("Invalid data", z.treeifyError(validatedData.error));
     }
 
     const { categories: categoryNames, ...courseFields } = validatedData.data;
+
+    const slugTaken = await prisma.course.findFirst({
+      where: { slug: courseFields.slug, NOT: { id: courseId } },
+      select: { id: true },
+    });
+    if (slugTaken) {
+      return errorResponse(
+        `The slug "${courseFields.slug}" is already in use. Please choose another.`,
+        null,
+      );
+    }
 
     const before = await prisma.course.findUnique({
       where: { id: courseId },
@@ -141,6 +157,15 @@ export async function updateCourse(courseId: string, values: CourseSchemaType) {
       // if it failed so Checkout can't charge the new amount.
       if (stripeSync) {
         await revertCourseProduct(stripeSync);
+      }
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === "P2002"
+      ) {
+        return errorResponse(
+          "That slug is already in use. Please choose another.",
+          null,
+        );
       }
       if (err instanceof CATEGORY_LIMIT_EXCEEDED) {
         return errorResponse(err.message, null);

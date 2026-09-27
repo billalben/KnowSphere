@@ -27,9 +27,17 @@ export async function generateMetadata({
 }: CoursePageProps): Promise<Metadata> {
   const { slug } = await params;
   const course = await getCourseBySlug(slug);
+  const path = `/courses/${course.slug}`;
   return {
     title: `${course.title} | KnowSphere`,
     description: course.smallDesc,
+    alternates: { canonical: path },
+    openGraph: {
+      title: course.title,
+      description: course.smallDesc,
+      url: path,
+      type: "website",
+    },
   };
 }
 

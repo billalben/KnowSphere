@@ -5,9 +5,9 @@ Notes for OpenCode sessions working in this repo.
 ## Tooling
 
 - Package manager is **pnpm** (`pnpm-lock.yaml`, `pnpm-workspace.yaml`). Do not use npm/yarn.
-- Scripts (`package.json`): `dev`, `build`, `start`, `lint`, `stripe:listen` (forwards to `localhost:3000/api/webhook/stripe`). There is **no** `test`, `typecheck`, or `format` script — invoke the binaries directly (e.g. `pnpm exec prisma generate`).
+- Scripts (`package.json`): `dev`, `build`, `start`, `lint`, `typecheck` (`tsc --noEmit`), `stripe:listen` (forwards to `localhost:3000/api/webhook/stripe`). There is **no** `test` or `format` script — invoke other binaries directly (e.g. `pnpm exec prisma generate`).
 - `postinstall` runs `prisma generate` automatically, so `lib/generated/prisma/` is populated after a fresh `pnpm install`. Re-run it manually after any `prisma/schema.prisma` change.
-- After edits, verify with `pnpm lint` then `pnpm exec tsc --noEmit`. No test suite exists; do not invent a runner without asking.
+- After edits, verify with `pnpm lint` then `pnpm typecheck`. No test suite exists; do not invent a runner without asking.
 - Path alias: `@/*` -> repo root (`tsconfig.json`).
 - `pnpm-workspace.yaml` allows only `@prisma/engines` and `prisma` to run install scripts; `sharp` and `unrs-resolver` are blocked.
 - `README.md` is unedited `create-next-app` boilerplate that still mentions npm/yarn/bun. Ignore it; follow this file instead.
@@ -30,6 +30,7 @@ Notes for OpenCode sessions working in this repo.
 ## Auth & middleware gotcha
 
 - Auth is `better-auth` (`lib/auth.ts`): Prisma adapter, GitHub social provider, `emailOTP` plugin sending via Resend (`from: env.EMAIL_FROM`), plus the `admin` plugin (sets `User.role` — see below). Handler at `app/api/auth/[...all]/route.ts` — uses the new `toNextJsHandler(auth.handler)` pattern and wraps POST with Arcjet: `detectBot` plus a sliding-window rate limit on every POST, with tighter limits for OTP send (`/email-otp/send-verification-otp`) and OTP verify (`/sign-in/email-otp`), and `protectSignup` on `/api/auth/sign-up`. Client helpers in `lib/auth-client.ts`.
+- **OTP-only auth — there are no passwords.** Only GitHub OAuth and email OTP (`emailAndPassword` is deliberately not enabled), so there is no password or password-reset flow to build.
 - Two server-side gates exist — call the right one from the right surface:
   - `app/data/admin/require-admin.ts` (`requireAdmin()`): no session -> `redirect("/login")`; session but `role !== "admin"` -> `redirect("/not-admin")`.
   - `app/data/user/require-user.ts` (`requireUser()`): no session -> `redirect("/login")`; any signed-in user passes. Use this for learner-facing pages that should not be admin-gated.
@@ -67,6 +68,7 @@ Notes for OpenCode sessions working in this repo.
 
 - `next.config.ts` allows `images.remotePatterns` for `${NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES}.t3.tigrisfiles.io`.
 - Files are uploaded via presigned URLs from `/api/s3/upload`, stored on Tigris (S3-compatible) via `@aws-sdk/client-s3` + `@aws-sdk/s3-request-presigner` (`lib/S3Client.ts`).
+- Stale `PendingUpload` rows/objects are swept by `sweepOrphanUploads` (`lib/s3/discard-upload.ts`). Today it is **manual-only**, triggered by the admin cleanup button (`cleanupOrphanUploadsAction`); it is not scheduled. If you add scheduling, expose it via a cron route instead of changing the manual path.
 
 ## Versions that bite
 

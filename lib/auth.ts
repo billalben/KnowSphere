@@ -6,6 +6,8 @@ import { env } from "./env";
 import { resend } from "./resend";
 import { admin } from "better-auth/plugins";
 
+// Auth is GitHub OAuth + email OTP only. There is intentionally no
+// email/password provider, so there is no password-reset flow to build.
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",

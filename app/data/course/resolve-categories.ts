@@ -3,7 +3,7 @@ import "server-only";
 import type { Prisma, PrismaClient } from "@/lib/generated/prisma/client";
 import prisma from "@/lib/prisma";
 
-import { formatSlug } from "@/lib/formatSlug";
+import { deriveBaseSlug, pickAvailableSlug } from "@/lib/category-slug";
 import { MAX_CATEGORIES } from "@/lib/constants/categories";
 
 export { MAX_CATEGORIES };
@@ -113,18 +113,6 @@ export async function resolveCategories(
   }
 
   return resolved;
-}
-
-function deriveBaseSlug(name: string): string {
-  const slug = formatSlug(name);
-  return slug || `category-${Date.now().toString(36)}`;
-}
-
-function pickAvailableSlug(base: string, taken: Set<string>): string {
-  if (!taken.has(base)) return base;
-  let suffix = 2;
-  while (taken.has(`${base}-${suffix}`)) suffix += 1;
-  return `${base}-${suffix}`;
 }
 
 export class CATEGORY_LIMIT_EXCEEDED extends Error {

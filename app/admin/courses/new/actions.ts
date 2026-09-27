@@ -1,8 +1,10 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { Prisma } from "@/lib/generated/prisma/client";
 import { errorResponse, successResponse } from "@/lib/responses";
 import { type CourseSchemaType, courseSchema } from "@/lib/zodSchemas";
+import { deriveCourseSlug } from "@/lib/formatSlug";
 import { z } from "zod";
 import { requireAdmin } from "@/app/data/admin/require-admin";
 import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
@@ -50,13 +52,27 @@ export async function createCourse(values: CourseSchemaType) {
       return errorResponse("Too many requests", null);
     }
 
-    const validatedData = courseSchema.safeParse(values);
+    const validatedData = courseSchema.safeParse({
+      ...values,
+      slug: deriveCourseSlug(values.slug, values.title),
+    });
 
     if (!validatedData.success) {
       return errorResponse("Invalid data", z.treeifyError(validatedData.error));
     }
 
     const { categories: categoryNames, ...courseFields } = validatedData.data;
+
+    const slugTaken = await prisma.course.findUnique({
+      where: { slug: courseFields.slug },
+      select: { id: true },
+    });
+    if (slugTaken) {
+      return errorResponse(
+        `The slug "${courseFields.slug}" is already in use. Please choose another.`,
+        null,
+      );
+    }
 
     const stripeDescription =
       htmlToPlainText(courseFields.description) ||
@@ -97,6 +113,15 @@ export async function createCourse(values: CourseSchemaType) {
       // The Stripe product was created before the DB write; if the write failed
       // it would be orphaned, so clean it up best-effort.
       await deleteCourseProduct(stripeProduct.productId);
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === "P2002"
+      ) {
+        return errorResponse(
+          "That slug is already in use. Please choose another.",
+          null,
+        );
+      }
       if (err instanceof CATEGORY_LIMIT_EXCEEDED) {
         return errorResponse(err.message, null);
       }
