@@ -4,7 +4,6 @@ import { GithubIcon, LinkedinIcon, TwitterIcon } from "lucide-react";
 
 import Logo from "@/public/logo.png";
 import { Separator } from "@/components/ui/separator";
-import { NewsletterForm } from "./NewsletterForm";
 
 interface FooterLink {
   label: string;
@@ -83,14 +82,6 @@ export function Footer() {
               your career, and explore what you love — taught by experts, on
               your schedule.
             </p>
-
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold">
-                Subscribe to our newsletter
-              </h3>
-
-              <NewsletterForm />
-            </div>
           </div>
 
           <div className="lg:col-span-5 grid grid-cols-2 gap-8 sm:grid-cols-3">

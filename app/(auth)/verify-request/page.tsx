@@ -15,6 +15,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { authClient } from "@/lib/auth-client";
+import { safeRedirect } from "@/lib/safe-redirect";
 import { LoaderIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, useTransition } from "react";
@@ -28,6 +29,7 @@ function VerifyEmailContent() {
 
   const params = useSearchParams();
   const email = params.get("email") || "";
+  const redirectTo = safeRedirect(params.get("redirect"));
 
   const isOtpValid = otp.length === 6;
 
@@ -39,7 +41,7 @@ function VerifyEmailContent() {
         fetchOptions: {
           onSuccess: () => {
             toast.success("Email verified successfully!");
-            router.push("/");
+            router.push(redirectTo);
           },
           onError: (error: { error: { message: string } }) => {
             console.error("Error verifying OTP:", error);

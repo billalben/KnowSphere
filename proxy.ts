@@ -8,7 +8,15 @@ export async function proxy(request: NextRequest) {
   });
 
   if (!session) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", request.nextUrl.pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // requireAdmin() inside the admin layout is the authoritative gate; this is
+  // just a cleaner redirect for signed-in non-admins.
+  if (session.user.role !== "admin") {
+    return NextResponse.redirect(new URL("/not-admin", request.url));
   }
 
   return NextResponse.next();

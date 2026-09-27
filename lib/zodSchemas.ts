@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { MAX_CATEGORIES_PER_COURSE } from "@/lib/constants/categories";
+
 export enum ECourseLevel {
   BEGINNER = "BEGINNER",
   INTERMEDIATE = "INTERMEDIATE",
@@ -29,7 +31,10 @@ export const courseSchema = z.object({
     .optional()
     .nullable()
     .transform((v) => (v && v.length > 0 ? v : null)),
-  price: z.coerce.number().min(0, "Price must be at least 0"),
+  priceCents: z.coerce
+    .number()
+    .int("Price must be a whole number of cents")
+    .min(0, "Price must be at least 0"),
   duration: z.coerce.number().min(1, "Duration must be at least 1 minute"),
   level: z.enum(ECourseLevel).default(ECourseLevel.BEGINNER),
   status: z.enum(ECourseStatus).default(ECourseStatus.DRAFT),
@@ -39,7 +44,10 @@ export const courseSchema = z.object({
     .max(50, "Slug must be at most 50 characters long"),
   categories: z
     .array(z.string().min(2).max(50))
-    .max(10, "A course can have at most 10 categories")
+    .max(
+      MAX_CATEGORIES_PER_COURSE,
+      `A course can have at most ${MAX_CATEGORIES_PER_COURSE} categories`,
+    )
     .default([]),
 });
 

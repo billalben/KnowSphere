@@ -6,8 +6,6 @@ import { requireUser } from "./require-user";
 export type tUserQuizAnswer = {
   id: string;
   text: string;
-  isCorrect: boolean;
-  explanation: string | null;
 };
 
 export type tUserQuizQuestion = {
@@ -29,11 +27,44 @@ type TGetLessonQuizForUserProps = {
 export async function getLessonQuizForUser({
   lessonId,
 }: TGetLessonQuizForUserProps): Promise<tUserLessonQuiz | null> {
-  await requireUser();
+  const session = await requireUser();
 
-  // The dashboard page calls getCourseForLearning first which enforces
-  // course-published + active enrollment (redirects on miss). This fetcher
-  // runs only after those gates pass, so we don't re-check them here.
+  // Resolve the owning course and enforce published + active enrollment so this
+  // fetcher can be safely reused from any entry point.
+  const lesson = await prisma.lesson.findUnique({
+    where: { id: lessonId },
+    select: {
+      chapter: {
+        select: {
+          courseId: true,
+          course: { select: { status: true } },
+        },
+      },
+    },
+  });
+
+  if (!lesson || lesson.chapter.course.status !== "PUBLISHED") {
+    return null;
+  }
+
+  if (session.user.role !== "admin") {
+    const enrollment = await prisma.enrollment.findUnique({
+      where: {
+        userId_courseId: {
+          userId: session.user.id,
+          courseId: lesson.chapter.courseId,
+        },
+      },
+      select: { status: true },
+    });
+
+    if (!enrollment || enrollment.status !== "Active") {
+      return null;
+    }
+  }
+
+  // Deliberately excludes `isCorrect`/`explanation` — grading happens in a
+  // server action so answers never reach the client before submission.
   const quiz = await prisma.quiz.findUnique({
     where: { lessonId },
     select: {
@@ -49,8 +80,6 @@ export async function getLessonQuizForUser({
             select: {
               id: true,
               text: true,
-              isCorrect: true,
-              explanation: true,
             },
           },
         },
@@ -71,8 +100,6 @@ export async function getLessonQuizForUser({
       answers: q.answers.map((a) => ({
         id: a.id,
         text: a.text,
-        isCorrect: a.isCorrect,
-        explanation: a.explanation,
       })),
     })),
   };

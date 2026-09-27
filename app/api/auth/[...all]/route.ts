@@ -38,6 +38,21 @@ const rateLimitOptions = {
   max: 5, // allows 5 submissions within the window
 } satisfies SlidingWindowRateLimitOptions<[]>;
 
+// OTP sends trigger an email (Resend cost + inbox bombing vector), so keep the
+// window tight and the ceiling low.
+const otpSendOptions = {
+  mode: "LIVE",
+  interval: "10m",
+  max: 3,
+} satisfies SlidingWindowRateLimitOptions<[]>;
+
+// OTP verification is brute-forceable, so allow a few attempts but throttle.
+const otpVerifyOptions = {
+  mode: "LIVE",
+  interval: "10m",
+  max: 10,
+} satisfies SlidingWindowRateLimitOptions<[]>;
+
 const signupOptions = {
   email: emailOptions,
   // uses a sliding window rate limit
@@ -62,9 +77,11 @@ async function protect(req: NextRequest): Promise<ArcjetDecision> {
     userId = ip(req) || "127.0.0.1"; // Fall back to local IP if none
   }
 
+  const pathname = req.nextUrl.pathname;
+
   // If this is a signup then use the special protectSignup rule
   // See https://docs.arcjet.com/signup-protection/quick-start
-  if (req.nextUrl.pathname.startsWith("/api/auth/sign-up")) {
+  if (pathname.startsWith("/api/auth/sign-up")) {
     // Better-Auth reads the body, so we need to clone the request preemptively
     const body = await req.clone().json();
 
@@ -82,12 +99,29 @@ async function protect(req: NextRequest): Promise<ArcjetDecision> {
         .withRule(slidingWindow(rateLimitOptions))
         .protect(req, { fingerprint: userId });
     }
-  } else {
-    // For all other auth requests
+  }
+
+  // OTP delivery (sign-in / email verification / password reset) sends mail.
+  if (pathname.startsWith("/api/auth/email-otp/send-verification-otp")) {
     return arcjet
       .withRule(detectBot(botOptions))
+      .withRule(slidingWindow(otpSendOptions))
       .protect(req, { fingerprint: userId });
   }
+
+  // OTP verification / OTP-based sign-in.
+  if (pathname.startsWith("/api/auth/sign-in/email-otp")) {
+    return arcjet
+      .withRule(detectBot(botOptions))
+      .withRule(slidingWindow(otpVerifyOptions))
+      .protect(req, { fingerprint: userId });
+  }
+
+  // For all other auth requests, apply a baseline rate limit + bot detection.
+  return arcjet
+    .withRule(detectBot(botOptions))
+    .withRule(slidingWindow(rateLimitOptions))
+    .protect(req, { fingerprint: userId });
 }
 
 const authHandlers = toNextJsHandler(auth.handler);
@@ -97,8 +131,6 @@ export const { GET } = authHandlers;
 // Wrap the POST handler with Arcjet protections
 export const POST = async (req: NextRequest) => {
   const decision = await protect(req);
-
-  console.log("Arcjet Decision:", decision);
 
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {

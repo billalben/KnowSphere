@@ -30,7 +30,7 @@ export function EditCourseForm({
         description: course.description ?? "",
         smallDesc: course.smallDesc,
         fileKey: course.fileKey ?? "",
-        price: course.price,
+        priceCents: course.priceCents,
         duration: course.duration,
         level: course.level as CourseSchemaType["level"],
         status: course.status as CourseSchemaType["status"],

@@ -1,20 +1,21 @@
 "use client";
 
-import { useMemo } from "react";
 import { useQueryStates, debounce } from "nuqs";
 
-import { type tCourse } from "@/app/data/course/get-all-courses";
+import {
+  type tCourseCatalogPage,
+} from "@/app/data/course/get-all-courses";
 import { CourseCard } from "./CourseCard";
 import { CourseListRow } from "./CourseListRow";
 import { useViewMode } from "../_hooks/use-view-mode";
 import {
-  coursesSearchParams,
   LEVEL_OPTIONS,
   SORT_OPTIONS,
   type LevelFilter,
   type SortKey,
   type ViewMode,
 } from "../_lib/courses-filters";
+import { coursesSearchParams } from "../_lib/courses-search-params";
 import { EmptyState } from "@/components/general/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,8 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import {
   BookOpenIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   FilterIcon,
   LayoutGridIcon,
   RowsIcon,
@@ -37,20 +40,7 @@ import {
 } from "lucide-react";
 
 interface CoursesExplorerProps {
-  courses: tCourse[];
-}
-
-function matchesLevel(course: tCourse, level: LevelFilter): boolean {
-  if (level === "All") return true;
-  return course.level === level.toUpperCase();
-}
-
-function matchesQuery(course: tCourse, q: string): boolean {
-  if (!q) return true;
-  return (
-    course.title.toLowerCase().includes(q) ||
-    course.smallDesc.toLowerCase().includes(q)
-  );
+  catalog: tCourseCatalogPage;
 }
 
 function findLabel<T extends string>(
@@ -60,68 +50,53 @@ function findLabel<T extends string>(
   return options.find((o) => o.value === value)?.label ?? value;
 }
 
-function sortCourses(courses: tCourse[], sort: SortKey): tCourse[] {
-  const next = [...courses];
-  switch (sort) {
-    case "newest":
-      return next.sort(
-        (a, b) =>
-          b.createdAt.getTime() - a.createdAt.getTime() ||
-          b.updatedAt.getTime() - a.updatedAt.getTime(),
-      );
-    case "price-asc":
-      return next.sort((a, b) => a.price - b.price);
-    case "price-desc":
-      return next.sort((a, b) => b.price - a.price);
-    case "duration-asc":
-      return next.sort((a, b) => a.duration - b.duration);
-    case "duration-desc":
-      return next.sort((a, b) => b.duration - a.duration);
-  }
-}
-
-export function CoursesExplorer({ courses }: CoursesExplorerProps) {
-  const [{ q, level, sort }, setParams] = useQueryStates(coursesSearchParams, {
-    history: "replace",
-    shallow: true,
-  });
+export function CoursesExplorer({ catalog }: CoursesExplorerProps) {
+  const [{ q, level, sort, page }, setParams] = useQueryStates(
+    coursesSearchParams,
+    {
+      history: "replace",
+      shallow: false,
+    },
+  );
 
   const [view, setView] = useViewMode();
 
-  const filtered = useMemo(() => {
-    const query = q.trim().toLowerCase();
-    return courses.filter(
-      (course) => matchesLevel(course, level) && matchesQuery(course, query),
-    );
-  }, [courses, level, q]);
-
-  const sorted = useMemo(() => sortCourses(filtered, sort), [filtered, sort]);
-
-  const noResults = sorted.length === 0;
   const hasFilters = q !== "" || level !== "All" || sort !== "newest";
+  const totalPages = Math.max(1, Math.ceil(catalog.total / catalog.pageSize));
+  const showingStart =
+    catalog.total === 0 ? 0 : (catalog.page - 1) * catalog.pageSize + 1;
+  const showingEnd = Math.min(
+    catalog.page * catalog.pageSize,
+    catalog.total,
+  );
 
   function handleQueryChange(value: string) {
-    setParams({ q: value }, { limitUrlUpdates: debounce(300) });
+    setParams({ q: value, page: null }, { limitUrlUpdates: debounce(300) });
   }
 
   function handleLevelChange(value: string | null) {
     if (value === "All" || value === null) {
-      setParams({ level: null });
+      setParams({ level: null, page: null });
     } else {
-      setParams({ level: value as LevelFilter });
+      setParams({ level: value as LevelFilter, page: null });
     }
   }
 
   function handleSortChange(value: string | null) {
     if (value === null) {
-      setParams({ sort: null });
+      setParams({ sort: null, page: null });
     } else {
-      setParams({ sort: value as SortKey });
+      setParams({ sort: value as SortKey, page: null });
     }
   }
 
+  function goToPage(next: number) {
+    if (next < 1 || next > totalPages || next === page) return;
+    setParams({ page: next <= 1 ? null : next });
+  }
+
   function resetFilters() {
-    setParams({ q: null, level: null, sort: null });
+    setParams({ q: null, level: null, sort: null, page: null });
   }
 
   function handleViewChange(value: string[]) {
@@ -139,7 +114,7 @@ export function CoursesExplorer({ courses }: CoursesExplorerProps) {
   }
 
   function renderResults() {
-    if (noResults) {
+    if (catalog.items.length === 0) {
       return (
         <EmptyState
           icon={SearchIcon}
@@ -153,7 +128,7 @@ export function CoursesExplorer({ courses }: CoursesExplorerProps) {
     if (view === "grid") {
       return (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {sorted.map((course) => (
+          {catalog.items.map((course) => (
             <CourseCard key={course.id} course={course} />
           ))}
         </div>
@@ -162,14 +137,14 @@ export function CoursesExplorer({ courses }: CoursesExplorerProps) {
 
     return (
       <div className="flex flex-col gap-4">
-        {sorted.map((course) => (
+        {catalog.items.map((course) => (
           <CourseListRow key={course.id} course={course} />
         ))}
       </div>
     );
   }
 
-  if (courses.length === 0) {
+  if (catalog.total === 0 && !hasFilters) {
     return (
       <EmptyState
         icon={BookOpenIcon}
@@ -214,10 +189,7 @@ export function CoursesExplorer({ courses }: CoursesExplorerProps) {
             aria-hidden
           />
 
-          <Select
-            value={level}
-            onValueChange={handleLevelChange}
-          >
+          <Select value={level} onValueChange={handleLevelChange}>
             <SelectTrigger className="w-40" aria-label="Filter by level">
               <SelectValue>
                 {(value) => findLabel(LEVEL_OPTIONS, value)}
@@ -268,17 +240,47 @@ export function CoursesExplorer({ courses }: CoursesExplorerProps) {
         <p>
           Showing{" "}
           <span className="font-medium text-foreground tabular-nums">
-            {sorted.length}
+            {showingStart}
+          </span>
+          –
+          <span className="font-medium text-foreground tabular-nums">
+            {showingEnd}
           </span>{" "}
           of{" "}
           <span className="font-medium text-foreground tabular-nums">
-            {courses.length}
+            {catalog.total}
           </span>{" "}
-          {courses.length === 1 ? "course" : "courses"}
+          {catalog.total === 1 ? "course" : "courses"}
         </p>
       </div>
 
       {renderResults()}
+
+      {totalPages > 1 ? (
+        <div className="flex items-center justify-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => goToPage(catalog.page - 1)}
+            disabled={catalog.page <= 1}
+          >
+            <ChevronLeftIcon className="size-4" />
+            Previous
+          </Button>
+          <span className="text-sm text-muted-foreground tabular-nums">
+            Page {catalog.page} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => goToPage(catalog.page + 1)}
+            disabled={!catalog.hasMore}
+          >
+            Next
+            <ChevronRightIcon className="size-4" />
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

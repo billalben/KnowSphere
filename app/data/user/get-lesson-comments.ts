@@ -2,9 +2,11 @@ import "server-only";
 
 import prisma from "@/lib/prisma";
 import { COMMENT_PAGE_SIZE } from "@/lib/constants/comments";
+import { normalizePagination } from "@/lib/pagination";
 import { type tCommentPage, type tCommentSort } from "@/types/comments";
 
 const DEFAULT_PAGE_SIZE = COMMENT_PAGE_SIZE;
+const MAX_PAGE_SIZE = 50;
 
 export async function getLessonComments({
   lessonId,
@@ -25,13 +27,19 @@ export async function getLessonComments({
       ? [{ createdAt: "desc" as const }, { id: "desc" as const }]
       : [{ createdAt: "asc" as const }, { id: "asc" as const }];
 
+  const { page: safePage, pageSize: safePageSize, skip, take } =
+    normalizePagination(
+      { page, pageSize },
+      { defaultPageSize: DEFAULT_PAGE_SIZE, maxPageSize: MAX_PAGE_SIZE },
+    );
+
   const [total, rows] = await Promise.all([
     prisma.lessonComment.count({ where }),
     prisma.lessonComment.findMany({
       where,
       orderBy,
-      skip: (page - 1) * pageSize,
-      take: pageSize,
+      skip,
+      take,
       select: {
         id: true,
         content: true,
@@ -78,8 +86,8 @@ export async function getLessonComments({
   return {
     items,
     total,
-    page,
-    pageSize,
-    hasMore: page * pageSize < total,
+    page: safePage,
+    pageSize: safePageSize,
+    hasMore: safePage * safePageSize < total,
   };
 }

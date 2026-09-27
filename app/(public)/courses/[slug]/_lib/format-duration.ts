@@ -7,11 +7,6 @@ export function formatDuration(minutes: number): string {
   return `${hours}h ${mins}m`;
 }
 
-export function formatPrice(price: number): string {
-  if (!price) return "Free";
-  return `$${price.toFixed(2)}`;
-}
-
 export function formatDate(date: Date): string {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",

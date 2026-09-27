@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { CourseImage } from "@/components/general/CourseImage";
 import { RatingBadge } from "@/components/general/RatingBadge";
 import { cn } from "@/lib/utils";
+import { formatPrice } from "@/lib/format-price";
 import { ClockIcon, GraduationCapIcon, PlayCircleIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -21,11 +22,6 @@ function formatDuration(minutes: number): string {
   if (hours === 0) return `${mins} min`;
   if (mins === 0) return `${hours}h`;
   return `${hours}h ${mins}m`;
-}
-
-function formatPrice(price: number): string {
-  if (!price) return "Free";
-  return `$${price.toFixed(2)}`;
 }
 
 const levelStyles: Record<string, string> = {
@@ -68,7 +64,7 @@ export function CourseCard({ course, className }: CourseCardProps) {
 
         <div className="absolute top-3 right-3">
           <Badge className="bg-background/90 text-foreground backdrop-blur-sm tabular-nums">
-            {formatPrice(course.price)}
+            {formatPrice(course.priceCents)}
           </Badge>
         </div>
       </div>
@@ -101,7 +97,7 @@ export function CourseCard({ course, className }: CourseCardProps) {
             </span>
           </div>
           <span className="text-sm font-semibold text-foreground tabular-nums">
-            {formatPrice(course.price)}
+            {formatPrice(course.priceCents)}
           </span>
         </div>
       </div>

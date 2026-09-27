@@ -3,7 +3,7 @@ import "server-only";
 import type { Prisma, PrismaClient } from "@/lib/generated/prisma/client";
 import prisma from "@/lib/prisma";
 
-import { formatSlug } from "@/lib/formatSlug";
+import { deriveBaseSlug, pickAvailableSlug } from "@/lib/category-slug";
 import { MAX_CATEGORIES } from "@/lib/constants/categories";
 
 export { MAX_CATEGORIES };
@@ -79,32 +79,40 @@ export async function resolveCategories(
       ).map((c) => c.slug),
     );
 
-    for (const name of toCreate) {
+    // Precompute slugs sequentially (no DB round-trips), then insert in one
+    // statement. `skipDuplicates` absorbs races where a concurrent request
+    // created the same category/slug first.
+    const createData = toCreate.map((name) => {
       const base = deriveBaseSlug(name);
       const slug = pickAvailableSlug(base, takenSlugs);
       takenSlugs.add(slug);
+      return { name, slug };
+    });
 
-      const created = await client.category.create({
-        data: { name, slug },
-        select: { id: true, name: true, slug: true },
-      });
-      resolved.push(created);
+    await client.category.createMany({
+      data: createData,
+      skipDuplicates: true,
+    });
+
+    const createdRows = await client.category.findMany({
+      where: {
+        OR: toCreate.map((name) => ({
+          name: { equals: name, mode: "insensitive" as const },
+        })),
+      },
+      select: { id: true, name: true, slug: true },
+    });
+
+    const createdByLowercase = new Map(
+      createdRows.map((c) => [c.name.toLowerCase(), c]),
+    );
+    for (const name of toCreate) {
+      const row = createdByLowercase.get(name.toLowerCase());
+      if (row) resolved.push(row);
     }
   }
 
   return resolved;
-}
-
-function deriveBaseSlug(name: string): string {
-  const slug = formatSlug(name);
-  return slug || `category-${Date.now().toString(36)}`;
-}
-
-function pickAvailableSlug(base: string, taken: Set<string>): string {
-  if (!taken.has(base)) return base;
-  let suffix = 2;
-  while (taken.has(`${base}-${suffix}`)) suffix += 1;
-  return `${base}-${suffix}`;
 }
 
 export class CATEGORY_LIMIT_EXCEEDED extends Error {

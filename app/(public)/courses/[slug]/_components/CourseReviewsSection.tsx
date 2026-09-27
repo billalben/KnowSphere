@@ -57,7 +57,11 @@ export function CourseReviewsSection({
     return next;
   }, [initialReviews, optimisticMyReview]);
 
-  const total = initialTotal + (optimisticMyReview ? 0 : 0);
+  const isNewReview =
+    optimisticMyReview !== null &&
+    !initialReviews.some((r) => r.id === optimisticMyReview.id);
+
+  const total = initialTotal + (isNewReview ? 1 : 0);
 
   function onReviewSubmitted(review: tCourseReviewView) {
     setOptimisticMyReview(review);

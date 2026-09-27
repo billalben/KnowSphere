@@ -6,6 +6,8 @@ import { env } from "./env";
 import { resend } from "./resend";
 import { admin } from "better-auth/plugins";
 
+// Auth is GitHub OAuth + email OTP only. There is intentionally no
+// email/password provider, so there is no password-reset flow to build.
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
@@ -19,23 +21,20 @@ export const auth = betterAuth({
   plugins: [
     admin(),
     emailOTP({
-      async sendVerificationOTP({ email, otp, type }) {
-        const { error } = await resend.emails.send({
-          from: "KnowSphere <noreply@billalbenz.com>",
-          to: [email],
-          subject: "Your OTP Code",
-          // react: EmailTemplate({ firstName: 'John' }),
-          html: `<p>Your OTP code is: <strong>${otp}</strong></p>`,
-        });
+      async sendVerificationOTP({ email, otp }) {
+        try {
+          const { error } = await resend.emails.send({
+            from: env.EMAIL_FROM,
+            to: [email],
+            subject: "Your OTP Code",
+            html: `<p>Your OTP code is: <strong>${otp}</strong></p>`,
+          });
 
-        console.error("Resend error:", error);
-
-        if (type === "sign-in") {
-          // Send the OTP for sign in
-        } else if (type === "email-verification") {
-          // Send the OTP for email verification
-        } else {
-          // Send the OTP for password reset
+          if (error) {
+            console.error("Failed to send OTP email:", error);
+          }
+        } catch (error) {
+          console.error("Failed to send OTP email:", error);
         }
       },
     }),

@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { getCourseForLearning } from "@/app/data/user/get-course-for-learning";
 import { getLessonComments } from "@/app/data/user/get-lesson-comments";
@@ -17,17 +17,13 @@ interface PageParams {
 
 export default async function LessonPlayerPage({ params }: PageParams) {
   const { slug, lessonId } = await params;
-  const course = await getCourseForLearning({ slug });
+  const course = await getCourseForLearning({ slug, currentLessonId: lessonId });
 
   const lessons = course.courseChapters.flatMap((chapter) => chapter.lessons);
   const currentIndex = lessons.findIndex((lesson) => lesson.id === lessonId);
 
   if (currentIndex === -1) {
-    const fallback = lessons[0];
-    if (!fallback) {
-      notFound();
-    }
-    redirect(`/dashboard/courses/${slug}/${fallback.id}`);
+    notFound();
   }
 
   const currentLesson = lessons[currentIndex];

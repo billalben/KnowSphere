@@ -7,12 +7,12 @@ import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 import { request } from "@arcjet/next";
 import { errorResponse, successResponse } from "@/lib/responses";
 import { requireAdmin } from "@/app/data/admin/require-admin";
-import { adminLog } from "@/lib/activity/admin-log";
+import { safeAdminLog } from "@/lib/activity/admin-log";
 import {
   buildCategoryFieldChanges,
   snapshotCategory,
 } from "@/lib/activity/snapshots/category";
-import { formatSlug } from "@/lib/formatSlug";
+import { deriveBaseSlug, pickAvailableSlug } from "@/lib/category-slug";
 import { categoryNameSchema } from "@/lib/zodSchemas";
 import { MAX_CATEGORIES } from "@/lib/constants/categories";
 import { z } from "zod";
@@ -36,13 +36,6 @@ async function arcjetGuard(fingerprint: string) {
   const req = await request();
   const decision = await aj.protect(req, { fingerprint });
   return decision.isDenied();
-}
-
-function uniqueSlug(base: string, taken: Set<string>): string {
-  if (!taken.has(base)) return base;
-  let suffix = 2;
-  while (taken.has(`${base}-${suffix}`)) suffix += 1;
-  return `${base}-${suffix}`;
 }
 
 export async function createCategoryAction({ name }: { name: string }) {
@@ -79,7 +72,7 @@ export async function createCategoryAction({ name }: { name: string }) {
       );
     }
 
-    const baseSlug = formatSlug(trimmed) || `category-${Date.now().toString(36)}`;
+    const baseSlug = deriveBaseSlug(trimmed);
     const taken = new Set(
       (
         await prisma.category.findMany({
@@ -92,11 +85,11 @@ export async function createCategoryAction({ name }: { name: string }) {
     const category = await prisma.category.create({
       data: {
         name: trimmed,
-        slug: uniqueSlug(baseSlug, taken),
+        slug: pickAvailableSlug(baseSlug, taken),
       },
     });
 
-    await adminLog({
+    await safeAdminLog({
       action: "CATEGORY_CREATED",
       entityType: "CATEGORY",
       entityId: category.id,
@@ -157,7 +150,7 @@ export async function updateCategoryAction({
       }
     }
 
-    const baseSlug = formatSlug(trimmed) || `category-${Date.now().toString(36)}`;
+    const baseSlug = deriveBaseSlug(trimmed);
     const taken = new Set(
       (
         await prisma.category.findMany({
@@ -169,7 +162,7 @@ export async function updateCategoryAction({
     const nextSlug =
       before.name.toLowerCase() === trimmed.toLowerCase()
         ? before.slug
-        : uniqueSlug(baseSlug, taken);
+        : pickAvailableSlug(baseSlug, taken);
 
     const category = await prisma.category.update({
       where: { id },
@@ -184,7 +177,7 @@ export async function updateCategoryAction({
     );
 
     if (Object.keys(changedFields).length > 0) {
-      await adminLog({
+      await safeAdminLog({
         action: "CATEGORY_UPDATED",
         entityType: "CATEGORY",
         entityId: category.id,
@@ -229,7 +222,7 @@ export async function deleteCategoryAction({ id }: { id: string }) {
     // when the category is in use. Courses themselves remain intact.
     await prisma.category.delete({ where: { id } });
 
-    await adminLog({
+    await safeAdminLog({
       action: "CATEGORY_DELETED",
       entityType: "CATEGORY",
       entityId: category.id,

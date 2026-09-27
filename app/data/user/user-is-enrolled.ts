@@ -4,17 +4,34 @@ import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { headers } from "next/headers";
 
-export async function checkIfCourseBought({ courseId }: { courseId: string }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+export async function checkIfCourseBought({
+  courseId,
+  userId,
+}: {
+  courseId: string;
+  /**
+   * The caller's already-resolved user id. Pass it to avoid a second session
+   * lookup; pass `null` for a known signed-out viewer.
+   */
+  userId?: string | null;
+}) {
+  let resolvedUserId = userId;
 
-  if (!session || !session.user) return false;
+  if (resolvedUserId === undefined) {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
 
-  const enrolllment = await prisma.enrollment.findUnique({
+    if (!session || !session.user) return false;
+    resolvedUserId = session.user.id;
+  }
+
+  if (!resolvedUserId) return false;
+
+  const enrollment = await prisma.enrollment.findUnique({
     where: {
       userId_courseId: {
-        userId: session.user.id,
+        userId: resolvedUserId,
         courseId: courseId,
       },
     },
@@ -23,5 +40,5 @@ export async function checkIfCourseBought({ courseId }: { courseId: string }) {
     },
   });
 
-  return enrolllment?.status === "Active" ? true : false;
+  return enrollment?.status === "Active";
 }

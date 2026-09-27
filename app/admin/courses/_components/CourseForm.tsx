@@ -94,7 +94,7 @@ export function CourseForm({
       description: "",
       smallDesc: "",
       fileKey: "",
-      price: 0,
+      priceCents: 0,
       duration: 1,
       level: ECourseLevel.BEGINNER,
       status: ECourseStatus.DRAFT,
@@ -383,7 +383,7 @@ export function CourseForm({
               />
 
               <Controller
-                name="price"
+                name="priceCents"
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
@@ -393,11 +393,18 @@ export function CourseForm({
                       id="price"
                       type="number"
                       min="0"
-                      step="1.00"
+                      step="0.01"
                       placeholder="0.00"
                       aria-invalid={fieldState.invalid}
-                      value={String(field.value ?? "")}
-                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                      value={
+                        field.value ? String(Number(field.value) / 100) : ""
+                      }
+                      onChange={(e) => {
+                        const dollars = e.target.valueAsNumber;
+                        field.onChange(
+                          Number.isNaN(dollars) ? 0 : Math.round(dollars * 100),
+                        );
+                      }}
                     />
                     <FieldDescription>
                       Course price in dollars (minimum 0)

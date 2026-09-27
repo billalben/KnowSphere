@@ -10,6 +10,7 @@ import { CourseImage } from "@/components/general/CourseImage";
 import { EmptyState } from "@/components/general/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { formatPrice } from "@/lib/format-price";
 import {
   Card,
   CardContent,
@@ -30,11 +31,6 @@ function formatDuration(minutes: number): string {
   if (hours === 0) return `${mins} min`;
   if (mins === 0) return `${hours}h`;
   return `${hours}h ${mins}min`;
-}
-
-function formatPrice(price: number): string {
-  if (!price) return "Free";
-  return `$${price.toFixed(2)}`;
 }
 
 function formatLevel(level: tAnalyticsRecentCourse["level"]): string {
@@ -129,7 +125,7 @@ export function RecentCourses({ courses }: RecentCoursesProps) {
                       </span>
                       <span className="inline-flex items-center gap-1">
                         <DollarSignIcon className="size-3" aria-hidden />
-                        {formatPrice(course.price)}
+                        {formatPrice(course.priceCents)}
                       </span>
                     </div>
                   </div>

@@ -1,6 +1,10 @@
 import "server-only";
 
 import prisma from "@/lib/prisma";
+import { normalizePagination } from "@/lib/pagination";
+
+const DEFAULT_PAGE_SIZE = 10;
+const MAX_PAGE_SIZE = 50;
 
 export type tCourseReviewsPage = {
   items: Array<{
@@ -25,20 +29,24 @@ export type tCourseReviewsPage = {
 export async function getCourseReviews({
   courseId,
   page = 1,
-  pageSize = 10,
+  pageSize = DEFAULT_PAGE_SIZE,
 }: {
   courseId: string;
   page?: number;
   pageSize?: number;
 }): Promise<tCourseReviewsPage> {
-  const skip = (page - 1) * pageSize;
+  const { page: safePage, pageSize: safePageSize, skip, take } =
+    normalizePagination(
+      { page, pageSize },
+      { defaultPageSize: DEFAULT_PAGE_SIZE, maxPageSize: MAX_PAGE_SIZE },
+    );
 
   const [rows, total] = await Promise.all([
     prisma.courseReview.findMany({
       where: { courseId },
       orderBy: { createdAt: "desc" },
       skip,
-      take: pageSize,
+      take,
       select: {
         id: true,
         rating: true,
@@ -70,8 +78,8 @@ export async function getCourseReviews({
       },
     })),
     total,
-    page,
-    pageSize,
+    page: safePage,
+    pageSize: safePageSize,
   };
 }
 

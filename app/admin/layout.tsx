@@ -1,4 +1,5 @@
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { requireAdmin } from "@/app/data/admin/require-admin";
 import { AdminSidebar } from "./_components/AdminSidebar";
 import { AdminHeader } from "./_components/AdminHeader";
 
@@ -6,7 +7,9 @@ interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
-export default function AdminLayout({ children }: AdminLayoutProps) {
+export default async function AdminLayout({ children }: AdminLayoutProps) {
+  await requireAdmin();
+
   return (
     <SidebarProvider
       className="h-svh overflow-hidden"

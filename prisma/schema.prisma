@@ -46,6 +46,7 @@ model User {
   banExpires DateTime?
 
   @@unique([email])
+  @@index([createdAt])
   @@map("user")
 }
 
@@ -178,9 +179,9 @@ model Course {
   description String?
   smallDesc   String
 
-  fileKey  String?
-  price    Float
-  duration Int // duration in minutes
+  fileKey    String?
+  priceCents Int // price in integer cents
+  duration   Int // duration in minutes
   level    CourseLevel @default(BEGINNER)
 
   slug   String       @unique
@@ -200,6 +201,8 @@ model Course {
   categories     Category[]      @relation("CourseCategories")
 
   stripePriceId String @unique
+
+  @@index([createdAt])
 }
 
 model Category {
@@ -320,12 +323,22 @@ model Enrollment {
   userId String
 
   @@unique([userId, courseId])
+  @@index([createdAt])
 }
 
 enum EnrollmentStatus {
   Pending
   Active
   Cancelled
+}
+
+// Records processed Stripe webhook event IDs so replayed events are no-ops.
+model ProcessedWebhookEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now())
+
+  @@map("processed_webhook_event")
 }
 
 enum QuizQuestionType {
@@ -444,6 +457,11 @@ model Certificate {
   courseId String?
   course   Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
 
+  // Stable copy of the course id at issue time. `courseId` goes NULL when a
+  // course is deleted, and Postgres treats NULLs as distinct in unique indexes,
+  // so this is what actually enforces one certificate per (user, course).
+  courseIdSnapshot String
+
   // Snapshot fields — fallback ONLY when the course is deleted (course becomes null).
   // The public page prefers live course data; these are insurance against deletion.
   courseTitleSnapshot    String
@@ -457,6 +475,7 @@ model Certificate {
   issuedAt      DateTime @default(now())
 
   @@unique([userId, courseId])
+  @@unique([userId, courseIdSnapshot])
   @@index([verificationCode])
   @@index([userId, issuedAt])
   @@index([courseId])

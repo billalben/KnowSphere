@@ -1,9 +1,13 @@
 import "server-only";
 
 import prisma from "@/lib/prisma";
+import { WISHLIST_PAGE_SIZE } from "@/lib/constants/wishlist";
+import { normalizePagination } from "@/lib/pagination";
 import { getDownloadUrls } from "@/lib/s3/get-download-url";
 
 import { requireUser } from "./require-user";
+
+const MAX_PAGE_SIZE = 50;
 
 export type tWishlistCourse = {
   id: string;
@@ -13,7 +17,7 @@ export type tWishlistCourse = {
   duration: number;
   level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
-  price: number;
+  priceCents: number;
   imageUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -36,13 +40,17 @@ export type tWishlistPage = {
 
 export async function getMyWishlistCourses({
   page = 1,
-  pageSize = 10,
+  pageSize = WISHLIST_PAGE_SIZE,
 }: {
   page?: number;
   pageSize?: number;
 }): Promise<tWishlistPage> {
   const session = await requireUser();
-  const skip = (page - 1) * pageSize;
+  const { page: safePage, pageSize: safePageSize, skip, take } =
+    normalizePagination(
+      { page, pageSize },
+      { defaultPageSize: WISHLIST_PAGE_SIZE, maxPageSize: MAX_PAGE_SIZE },
+    );
 
   const [rows, total] = await Promise.all([
     prisma.wishlistItem.findMany({
@@ -52,7 +60,7 @@ export async function getMyWishlistCourses({
       },
       orderBy: { createdAt: "desc" },
       skip,
-      take: pageSize,
+      take,
       select: {
         id: true,
         createdAt: true,
@@ -65,7 +73,7 @@ export async function getMyWishlistCourses({
             duration: true,
             level: true,
             status: true,
-            price: true,
+            priceCents: true,
             fileKey: true,
             createdAt: true,
             updatedAt: true,
@@ -113,7 +121,7 @@ export async function getMyWishlistCourses({
       duration: row.course.duration,
       level: row.course.level,
       status: row.course.status,
-      price: row.course.price,
+      priceCents: row.course.priceCents,
       imageUrl: imageUrls[i],
       createdAt: row.course.createdAt,
       updatedAt: row.course.updatedAt,
@@ -131,5 +139,5 @@ export async function getMyWishlistCourses({
     };
   });
 
-  return { items, total, page, pageSize };
+  return { items, total, page: safePage, pageSize: safePageSize };
 }

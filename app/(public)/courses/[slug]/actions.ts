@@ -47,14 +47,22 @@ export async function enrollInCourseAction({
       select: {
         id: true,
         title: true,
-        price: true,
+        priceCents: true,
+        stripePriceId: true,
         slug: true,
       },
     });
 
     if (!course) return errorResponse("Course not found", null);
 
-    const isFree = !course.price;
+    const isFree = course.priceCents === 0;
+
+    if (!isFree && !course.stripePriceId) {
+      return errorResponse(
+        "This course is not available for purchase right now.",
+        null,
+      );
+    }
 
     // Cheap isolated read -- no transactional context needed alongside Stripe.
     const existingEnrollment = await prisma.enrollment.findUnique({
@@ -128,7 +136,7 @@ export async function enrollInCourseAction({
         ? await tx.enrollment.update({
             where: { id: existingEnrollment.id },
             data: {
-              amount: course.price,
+              amount: course.priceCents,
               status: "Pending",
               updatedAt: new Date(),
             },
@@ -137,7 +145,7 @@ export async function enrollInCourseAction({
             data: {
               userId: session.user.id,
               courseId: course.id,
-              amount: course.price,
+              amount: course.priceCents,
               status: "Pending",
             },
           });
@@ -146,7 +154,7 @@ export async function enrollInCourseAction({
         customer: stripeCustomerId,
         line_items: [
           {
-            price: "price_1U6I4BBQldwOCYMBTVYAxujq",
+            price: course.stripePriceId,
             quantity: 1,
           },
         ],

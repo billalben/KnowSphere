@@ -13,7 +13,7 @@ import { requireAdmin } from "@/app/data/admin/require-admin";
 import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 import { request } from "@arcjet/next";
 import { revalidatePath } from "next/cache";
-import { adminLog } from "@/lib/activity/admin-log";
+import { adminLog, safeAdminLog } from "@/lib/activity/admin-log";
 import {
   buildLessonFieldChanges,
   snapshotLesson,
@@ -22,6 +22,7 @@ import {
   buildQuizFieldChanges,
   snapshotQuiz,
 } from "@/lib/activity/snapshots/quiz";
+import { isCompletePermutation } from "@/lib/reorder";
 
 const aj = arcjet
   .withRule(
@@ -110,7 +111,7 @@ export async function updateLesson(lessonId: string, values: LessonSchemaType) {
     );
 
     if (Object.keys(changedFields).length > 0) {
-      await adminLog({
+      await safeAdminLog({
         action: "LESSON_UPDATED",
         entityType: "LESSON",
         entityId: lesson.id,
@@ -325,15 +326,19 @@ export async function reorderQuizQuestions({
       return errorResponse("Quiz not found", null);
     }
 
-    const questionIds = parsed.data.questions.map((q) => q.id);
-
-    const ownedQuestions = await prisma.quizQuestion.findMany({
-      where: { id: { in: questionIds }, quizId: quiz.id },
+    const existingQuestions = await prisma.quizQuestion.findMany({
+      where: { quizId: quiz.id },
       select: { id: true },
     });
 
-    if (ownedQuestions.length !== questionIds.length) {
-      return errorResponse("One or more questions do not belong to this quiz", null);
+    if (
+      !isCompletePermutation(
+        parsed.data.questions,
+        existingQuestions.map((question) => question.id),
+        0,
+      )
+    ) {
+      return errorResponse("Invalid question order", null);
     }
 
     // Two-step update to avoid @@unique([quizId, position]) violations:

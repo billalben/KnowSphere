@@ -7,7 +7,7 @@ import { errorResponse, successResponse } from "@/lib/responses";
 import { requireAdmin } from "@/app/data/admin/require-admin";
 import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 import { request } from "@arcjet/next";
-import { adminLog } from "@/lib/activity/admin-log";
+import { safeAdminLog } from "@/lib/activity/admin-log";
 
 const aj = arcjet
   .withRule(
@@ -54,7 +54,7 @@ export async function deleteContactMessage({
       where: { id: messageId },
     });
 
-    await adminLog({
+    await safeAdminLog({
       action: "CONTACT_MESSAGE_DELETED",
       entityType: "CONTACT_MESSAGE",
       entityId: message.id,

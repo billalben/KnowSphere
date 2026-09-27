@@ -1,3 +1,15 @@
+/**
+ * Normalizes an admin-provided slug, falling back to deriving one from the
+ * course title when the slug is blank.
+ */
+export function deriveCourseSlug(
+  slug: string | undefined | null,
+  title: string,
+): string {
+  const fromSlug = formatSlug(typeof slug === "string" ? slug : "");
+  return fromSlug.length > 0 ? fromSlug : formatSlug(title);
+}
+
 export function formatSlug(title: string): string {
   return title
     .trim()

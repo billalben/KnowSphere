@@ -178,7 +178,7 @@ export async function submitReviewAction({
 
     const view = await getReviewView(reviewId);
 
-    return successView("Review submitted", view);
+    return successResponse<tCourseReviewView | null>("Review submitted", view);
   } catch {
     return errorResponse("Failed to submit review", null);
   }
@@ -255,15 +255,8 @@ export async function editReviewAction({
 
     const view = await getReviewView(reviewId);
 
-    return successView("Review updated", view);
+    return successResponse<tCourseReviewView | null>("Review updated", view);
   } catch {
     return errorResponse("Failed to update review", null);
   }
-}
-
-function successView(
-  message: string,
-  view: tCourseReviewView | null,
-): tApiResponse<tCourseReviewView | null> {
-  return successResponse<tCourseReviewView | null>(message, view);
 }
