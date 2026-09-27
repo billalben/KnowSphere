@@ -7,8 +7,12 @@ import { z } from "zod";
 import { requireAdmin } from "@/app/data/admin/require-admin";
 import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 import { request } from "@arcjet/next";
-import { stripe } from "@/lib/stripe";
-import { adminLog } from "@/lib/activity/admin-log";
+import { safeAdminLog } from "@/lib/activity/admin-log";
+import { htmlToPlainText } from "@/lib/plain-text";
+import {
+  createCourseProduct,
+  deleteCourseProduct,
+} from "@/lib/stripe/course-product";
 import {
   CATEGORY_LIMIT_EXCEEDED,
   resolveCategories,
@@ -28,15 +32,6 @@ const aj = arcjet
       max: 5,
     }),
   );
-
-function toPlainText(html: string | undefined | null): string {
-  if (!html) return "";
-  return html
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 export async function createCourse(values: CourseSchemaType) {
   const session = await requireAdmin();
@@ -64,17 +59,14 @@ export async function createCourse(values: CourseSchemaType) {
     const { categories: categoryNames, ...courseFields } = validatedData.data;
 
     const stripeDescription =
-      toPlainText(courseFields.description) ||
+      htmlToPlainText(courseFields.description) ||
       courseFields.smallDesc.trim() ||
       undefined;
 
-    const stripeProduct = await stripe.products.create({
-      name: courseFields.title,
-      ...(stripeDescription !== undefined && { description: stripeDescription }),
-      default_price_data: {
-        currency: "usd",
-        unit_amount: courseFields.priceCents,
-      },
+    const stripeProduct = await createCourseProduct({
+      title: courseFields.title,
+      description: stripeDescription,
+      priceCents: courseFields.priceCents,
     });
 
     let course;
@@ -86,7 +78,7 @@ export async function createCourse(values: CourseSchemaType) {
           data: {
             ...courseFields,
             userId: session.user.id,
-            stripePriceId: String(stripeProduct.default_price),
+            stripePriceId: stripeProduct.priceId,
             categories: {
               connect: categories.map((c) => ({ id: c.id })),
             },
@@ -102,13 +94,16 @@ export async function createCourse(values: CourseSchemaType) {
         return created;
       });
     } catch (err) {
+      // The Stripe product was created before the DB write; if the write failed
+      // it would be orphaned, so clean it up best-effort.
+      await deleteCourseProduct(stripeProduct.productId);
       if (err instanceof CATEGORY_LIMIT_EXCEEDED) {
         return errorResponse(err.message, null);
       }
       throw err;
     }
 
-    await adminLog({
+    await safeAdminLog({
       action: "COURSE_CREATED",
       entityType: "COURSE",
       entityId: course.id,

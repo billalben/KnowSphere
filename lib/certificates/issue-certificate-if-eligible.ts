@@ -87,6 +87,7 @@ export async function issueCertificateIfEligible({
           verificationCode,
           userId,
           courseId: course.id,
+          courseIdSnapshot: course.id,
           courseTitleSnapshot: course.title,
           courseSlugSnapshot: course.slug,
           levelSnapshot: course.level,

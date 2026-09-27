@@ -6,8 +6,9 @@ import { requireAdmin } from "@/app/data/admin/require-admin";
 import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 import { request } from "@arcjet/next";
 import { revalidatePath } from "next/cache";
-import { adminLog } from "@/lib/activity/admin-log";
+import { safeAdminLog } from "@/lib/activity/admin-log";
 import { deleteObject } from "@/lib/s3/discard-upload";
+import { deleteCourseProductByPriceId } from "@/lib/stripe/course-product";
 
 const aj = arcjet
   .withRule(
@@ -44,6 +45,7 @@ export async function deleteCourse({ courseId }: { courseId: string }) {
         title: true,
         slug: true,
         fileKey: true,
+        stripePriceId: true,
         courseChapters: {
           select: {
             lessons: {
@@ -64,6 +66,9 @@ export async function deleteCourse({ courseId }: { courseId: string }) {
       where: { id: courseId },
     });
 
+    // Best-effort: remove the Stripe product so it can't be purchased again.
+    await deleteCourseProductByPriceId(course.stripePriceId);
+
     // Best-effort: clean up Tigris objects now that nothing references them.
     const keysToDelete = [
       course.fileKey,
@@ -79,7 +84,7 @@ export async function deleteCourse({ courseId }: { courseId: string }) {
         .catch(() => {});
     }
 
-    await adminLog({
+    await safeAdminLog({
       action: "COURSE_DELETED",
       entityType: "COURSE",
       entityId: course.id,

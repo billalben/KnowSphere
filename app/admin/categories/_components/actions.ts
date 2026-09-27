@@ -7,7 +7,7 @@ import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 import { request } from "@arcjet/next";
 import { errorResponse, successResponse } from "@/lib/responses";
 import { requireAdmin } from "@/app/data/admin/require-admin";
-import { adminLog } from "@/lib/activity/admin-log";
+import { safeAdminLog } from "@/lib/activity/admin-log";
 import {
   buildCategoryFieldChanges,
   snapshotCategory,
@@ -96,7 +96,7 @@ export async function createCategoryAction({ name }: { name: string }) {
       },
     });
 
-    await adminLog({
+    await safeAdminLog({
       action: "CATEGORY_CREATED",
       entityType: "CATEGORY",
       entityId: category.id,
@@ -184,7 +184,7 @@ export async function updateCategoryAction({
     );
 
     if (Object.keys(changedFields).length > 0) {
-      await adminLog({
+      await safeAdminLog({
         action: "CATEGORY_UPDATED",
         entityType: "CATEGORY",
         entityId: category.id,
@@ -229,7 +229,7 @@ export async function deleteCategoryAction({ id }: { id: string }) {
     // when the category is in use. Courses themselves remain intact.
     await prisma.category.delete({ where: { id } });
 
-    await adminLog({
+    await safeAdminLog({
       action: "CATEGORY_DELETED",
       entityType: "CATEGORY",
       entityId: category.id,

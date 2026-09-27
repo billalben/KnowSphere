@@ -7,7 +7,7 @@ import prisma from "@/lib/prisma";
 import { request } from "@arcjet/next";
 import { errorResponse, successResponse } from "@/lib/responses";
 import { requireAdmin } from "@/app/data/admin/require-admin";
-import { adminLog } from "@/lib/activity/admin-log";
+import { safeAdminLog } from "@/lib/activity/admin-log";
 
 const aj = arcjet
   .withRule(
@@ -59,7 +59,7 @@ export async function deleteReviewAction({
       where: { id: reviewId },
     });
 
-    await adminLog({
+    await safeAdminLog({
       action: "REVIEW_DELETED",
       entityType: "REVIEW",
       entityId: review.id,

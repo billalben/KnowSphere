@@ -19,6 +19,19 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { useSignOut } from "@/hooks/use-signout";
 
+function getInitials(name: string, email: string): string {
+  const trimmed = name.trim();
+  if (trimmed) {
+    const parts = trimmed.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+  const local = email.split("@")[0] ?? "";
+  return local.slice(0, 2).toUpperCase() || "?";
+}
+
 function NavUser() {
   const { data: session, isPending } = authClient.useSession();
 
@@ -30,12 +43,12 @@ function NavUser() {
 
   const user = {
     name: session.user.name,
-    avatar:
-      session.user.image ||
-      `https://avatar.vercel.sh/rauchg/${session.user.name}` ||
-      "logo.png",
+    avatar: session.user.image ?? undefined,
     email: session.user.email,
   };
+
+  const initials = getInitials(user.name, user.email);
+  const displayName = user.name.trim() ? user.name : user.email.split("@")[0];
 
   return (
     <SidebarMenu>
@@ -51,17 +64,11 @@ function NavUser() {
                 <Avatar className="h-8 w-8 rounded-lg grayscale">
                   <AvatarImage src={user.avatar} alt={user.name} />
                   <AvatarFallback className="rounded-lg">
-                    {user?.name.length > 0
-                      ? user.name.charAt(0)
-                      : user.email.charAt(0)}
+                    {initials}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">
-                    {user?.name.length > 0
-                      ? user?.name
-                      : user.email.split("@")[0]}
-                  </span>
+                  <span className="truncate font-medium">{displayName}</span>
                   <span className="text-muted-foreground truncate text-xs">
                     {user.email}
                   </span>
@@ -81,10 +88,12 @@ function NavUser() {
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback className="rounded-lg">AD</AvatarFallback>
+                    <AvatarFallback className="rounded-lg">
+                      {initials}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{user.name}</span>
+                    <span className="truncate font-medium">{displayName}</span>
                     <span className="text-muted-foreground truncate text-xs">
                       {user.email}
                     </span>

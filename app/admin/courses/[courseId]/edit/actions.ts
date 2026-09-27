@@ -15,12 +15,19 @@ import { requireAdmin } from "@/app/data/admin/require-admin";
 import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 import { request } from "@arcjet/next";
 import { revalidatePath } from "next/cache";
-import { adminLog } from "@/lib/activity/admin-log";
+import { adminLog, safeAdminLog } from "@/lib/activity/admin-log";
+import { htmlToPlainText } from "@/lib/plain-text";
+import {
+  revertCourseProduct,
+  syncCourseProduct,
+  type SyncCourseProductResult,
+} from "@/lib/stripe/course-product";
 import {
   buildCourseFieldChanges,
   snapshotCourse,
 } from "@/lib/activity/snapshots/course";
 import { deleteObject } from "@/lib/s3/discard-upload";
+import { isCompletePermutation } from "@/lib/reorder";
 import {
   CATEGORY_LIMIT_EXCEEDED,
   resolveCategories,
@@ -75,9 +82,33 @@ export async function updateCourse(courseId: string, values: CourseSchemaType) {
         level: true,
         status: true,
         fileKey: true,
+        stripePriceId: true,
         categories: { select: { name: true }, orderBy: { name: "asc" } },
       },
     });
+
+    if (!before) {
+      return errorResponse("Course not found", null);
+    }
+
+    const stripeDescription =
+      htmlToPlainText(courseFields.description) || courseFields.smallDesc.trim();
+
+    // Prices are immutable in Stripe, so only touch the product when an
+    // editable, checkout-visible field actually changed.
+    let stripeSync: SyncCourseProductResult | null = null;
+    if (
+      before.title !== courseFields.title ||
+      htmlToPlainText(before.description) !== stripeDescription ||
+      before.priceCents !== courseFields.priceCents
+    ) {
+      stripeSync = await syncCourseProduct({
+        currentPriceId: before.stripePriceId,
+        title: courseFields.title,
+        description: stripeDescription || undefined,
+        priceCents: courseFields.priceCents,
+      });
+    }
 
     let course;
     let resolvedCategoryNames: string[] = [];
@@ -90,6 +121,7 @@ export async function updateCourse(courseId: string, values: CourseSchemaType) {
           where: { id: courseId },
           data: {
             ...courseFields,
+            ...(stripeSync ? { stripePriceId: stripeSync.priceId } : {}),
             categories: {
               set: categories.map((c) => ({ id: c.id })),
             },
@@ -105,6 +137,11 @@ export async function updateCourse(courseId: string, values: CourseSchemaType) {
         return updated;
       });
     } catch (err) {
+      // The DB write is the source of truth; roll Stripe back to the old price
+      // if it failed so Checkout can't charge the new amount.
+      if (stripeSync) {
+        await revertCourseProduct(stripeSync);
+      }
       if (err instanceof CATEGORY_LIMIT_EXCEEDED) {
         return errorResponse(err.message, null);
       }
@@ -113,7 +150,7 @@ export async function updateCourse(courseId: string, values: CourseSchemaType) {
 
     // If the thumbnail was replaced or removed, delete the previous object
     // from Tigris (best-effort) so it doesn't leak.
-    if (before?.fileKey && before.fileKey !== course.fileKey) {
+    if (before.fileKey && before.fileKey !== course.fileKey) {
       await deleteObject(before.fileKey);
       await prisma.pendingUpload
         .delete({ where: { key: before.fileKey } })
@@ -134,7 +171,7 @@ export async function updateCourse(courseId: string, values: CourseSchemaType) {
       const changedFields = buildCourseFieldChanges(beforeSnapshot, afterSnapshot);
 
       if (statusChanged) {
-        await adminLog({
+        await safeAdminLog({
           action: "COURSE_STATUS_CHANGED",
           entityType: "COURSE",
           entityId: course.id,
@@ -148,7 +185,7 @@ export async function updateCourse(courseId: string, values: CourseSchemaType) {
           },
         });
       } else if (Object.keys(changedFields).length > 0) {
-        await adminLog({
+        await safeAdminLog({
           action: "COURSE_UPDATED",
           entityType: "COURSE",
           entityId: course.id,
@@ -159,7 +196,8 @@ export async function updateCourse(courseId: string, values: CourseSchemaType) {
     }
 
     return successResponse("Course updated successfully", course);
-  } catch {
+  } catch (error) {
+    console.error("Failed to update course:", error);
     return errorResponse("Failed to update course", null);
   }
 }
@@ -186,17 +224,36 @@ export async function reorderLessons({
 
     await requireAdmin(); // checks if the user is an admin, if not, it will redirect to the login page
 
+    const chapter = await prisma.courseChapter.findUnique({
+      where: { id: chapterId },
+      select: { courseId: true, lessons: { select: { id: true } } },
+    });
+
+    if (!chapter || chapter.courseId !== courseId) {
+      return errorResponse("Chapter not found", null);
+    }
+
+    if (
+      !isCompletePermutation(
+        lessons,
+        chapter.lessons.map((lesson) => lesson.id),
+        1,
+      )
+    ) {
+      return errorResponse("Invalid lesson order", null);
+    }
+
     // Two-step update to avoid unique constraint violations on (chapterId, position):
     // first move every row to a temporary negative position, then set final positions.
     const tempUpdates = lessons.map((lesson, index) =>
       prisma.lesson.update({
-        where: { id: lesson.id, chapterId },
+        where: { id: lesson.id },
         data: { position: -(index + 1) },
       }),
     );
     const finalUpdates = lessons.map((lesson) =>
       prisma.lesson.update({
-        where: { id: lesson.id, chapterId },
+        where: { id: lesson.id },
         data: { position: lesson.position },
       }),
     );
@@ -231,17 +288,32 @@ export async function reorderChapters({
 
     await requireAdmin(); // checks if the user is an admin, if not, it will redirect to the login page
 
+    const existingChapters = await prisma.courseChapter.findMany({
+      where: { courseId },
+      select: { id: true },
+    });
+
+    if (
+      !isCompletePermutation(
+        chapters,
+        existingChapters.map((chapter) => chapter.id),
+        1,
+      )
+    ) {
+      return errorResponse("Invalid chapter order", null);
+    }
+
     // Two-step update to avoid unique constraint violations on (courseId, position):
     // first move every row to a temporary negative position, then set final positions.
     const tempUpdates = chapters.map((chapter, index) =>
       prisma.courseChapter.update({
-        where: { id: chapter.id, courseId },
+        where: { id: chapter.id },
         data: { position: -(index + 1) },
       }),
     );
     const finalUpdates = chapters.map((chapter) =>
       prisma.courseChapter.update({
-        where: { id: chapter.id, courseId },
+        where: { id: chapter.id },
         data: { position: chapter.position },
       }),
     );
@@ -492,12 +564,9 @@ export async function deleteChapter({
     }
 
     const chapters = courseWithChapters.courseChapters;
-    const chapterToDeleteVideos = chapters.find(
-      (c) => c.id === chapterId,
-    )?.lessons.map((l) => l.videoKey) ?? [];
 
     if (chapters.length === 0) {
-      return errorResponse("No lessons found", null);
+      return errorResponse("No chapters found", null);
     }
 
     const chapterToDelete = chapters.find(
@@ -506,6 +575,10 @@ export async function deleteChapter({
     if (!chapterToDelete) {
       return errorResponse("Chapter not found", null);
     }
+
+    const chapterToDeleteVideos = chapterToDelete.lessons.map(
+      (l) => l.videoKey,
+    );
 
     const remainingChapters = chapters.filter(
       (chapter) => chapter.id !== chapterId,
